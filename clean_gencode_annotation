@@ -1,0 +1,108 @@
+#!/usr/bin/perl -w
+
+use warnings;
+use strict;
+use POSIX;
+use Getopt::Long;
+use File::Path;
+use File::Basename;
+use Pod::Usage;
+
+=head1 NAME
+
+clean_gencode_annotation
+
+=head1 SYNOPSIS
+
+ clean_gencode_annotation [options]  
+  
+=head1 DESCRIPTION
+ 
+ Removes unnecessary annotation.  
+ 
+=cut
+
+#option variables
+my $help;
+my $verbose;
+my $debug;
+
+#initialize options
+Getopt::Long::Configure ('bundling');
+
+if(!GetOptions ('h'=>\$help, 'v'=>\$verbose, 'd'=>\$debug) 
+  || scalar(@ARGV)!=1)
+{
+    if ($help)
+    {
+        pod2usage(-verbose => 2);
+    }
+    else
+    {
+        pod2usage(1);
+    }
+}
+
+my $gencodeAnnotationGTFFile = $ARGV[0];
+
+open(GTF, "zcat $gencodeAnnotationGTFFile |") || die "Cannot open $gencodeAnnotationGTFFile";
+
+#        //populate interval trees with reference sets
+#        //gene transfer format
+#        //1   chr1
+#        //2   HAVANA - source
+#        //3   exon   - feature
+#        //4   13221  - start
+#        //5   14409  - end
+#        //6   .      - score
+#        //7   +      - strand
+#        //8   .      - frame
+#        //9   gene_id "ENSG - attribute
+#            //gene_id "ENSG00000149656.4";
+#            //transcript_id "ENST00000425473.1";
+#            //gene_type "processed_transcript";
+#            //gene_status "KNOWN";
+#            //gene_name "LINC00266-1";
+#            //transcript_type "processed_transcript";
+#            //transcript_status "KNOWN";
+#            //transcript_name "LINC00266-1-002"; exon_number 3;
+#            //exon_id "ENSE00002450675.1";
+#            //level 2; havana_gene "OTTHUMG00000033036.2";
+#            //havana_transcript "OTTHUMT00000080305.1";
+
+while(<GTF>)
+{
+    s/\r?\n?$//;
+    
+    if (/^#/)
+    {
+        print "$_\n";    
+    }
+    else
+    {
+        my ($chrom, $src, $feature, $start, $end, $score, $strand, $frame, $attribute) = split("\t", $_, 10);
+        
+        my @ATTRIB = split(';', $attribute);
+        my @newAttribs = ();
+        
+        for my $attrib (@ATTRIB)
+        {
+            $attrib =~ s/^\s+//;
+            
+            my @fields = split(' ', $attrib);
+            
+            if ($fields[0] eq "gene_type" ||
+                $fields[0] eq "gene_name" ||
+                $fields[0] eq "transcript_type" ||
+                $fields[0] eq "level")
+            {
+                push(@newAttribs, $attrib);
+            }
+        }
+        
+        print "$chrom\t$src\t$feature\t$start\t$end\t$score\t$strand\t$frame\t" . join(';', @newAttribs) . "\n";
+    
+    }
+}
+
+close(GTF);
