@@ -69,7 +69,7 @@ mkpath($outputDir);
 mkpath($logDir);
 
 #programs
-my $vt = "/net/fantasia/home/atks/dev/vt/bundle/bin/vt";
+my $vt = "/net/fantasia/home/atks/programs/vt/vt";
 my $bedtools = "/net/fantasia/home/atks/programs/bedtools2/bin/bedtools";
 
 #reference sequence
@@ -226,13 +226,54 @@ $dep = "$logDir/$destSitesVCFFile.OK";
 @cmd = ("$vt index $outputDir/$destSitesVCFFile 2> $logDir/$data.sites.index.log");
 makeStep($tgt, $dep, @cmd);
 
-##################
-#Illumina Platinum
-##################
+#####################
+#Illumina Platinum v7
+#####################
 #ConfidentRegions.bed.gz  
-$srcVCFFile = "/net/fantasia/home/atks/data/platinum_v7/NA12878.vcf.gz";
+$srcVCFFile = "/net/fantasia/home/atks/data/platinum/v7/NA12878.vcf.gz";
 
-$data = "NA12878.illumina.platinum";
+$data = "NA12878.illumina.platinum.v7";
+$destVCFFile = "$data.snps.indels.complex.genotypes.$ext";
+$destSitesVCFFile = "$data.snps.indels.complex.sites.$ext";
+
+#remove unecessary fields, normalize variants and removing duplicates
+$tgt = "$logDir/$destVCFFile.OK";
+$dep = "$srcVCFFile";
+@cmd = ("$binDir/clean_illumina_platinum $srcVCFFile | $vt normalize - -r ~/ref/genome/hs37d5.fa 2> $logDir/$data.normalize.log | $vt uniq - 2> $logDir/$data.uniq.log | $vt annotate_regions - -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
+makeStep($tgt, $dep, @cmd);
+
+##index file
+$tgt = "$logDir/$destVCFFile.$indexExt.OK";
+$dep = "$logDir/$destVCFFile.OK";
+@cmd = ("$vt index $outputDir/$destVCFFile 2> $logDir/$data.index.log");
+makeStep($tgt, $dep, @cmd);
+
+#summarize file
+$tgt = "$logDir/$data.peek.log.OK";
+$dep = "$logDir/$destVCFFile.OK";
+@cmd = ("$vt peek $outputDir/$destVCFFile 2> $logDir/$data.peek.log");
+makeStep($tgt, $dep, @cmd);
+
+#extract sites
+$tgt = "$logDir/$destSitesVCFFile.OK";
+$dep = "$logDir/$destVCFFile.OK";
+@cmd = ("$vt view -h -s -p $outputDir/$destVCFFile -o $outputDir/$destSitesVCFFile 2> $logDir/$data.sites.log");
+makeStep($tgt, $dep, @cmd);
+
+#index sites file
+$tgt = "$logDir/$destSitesVCFFile.$indexExt.OK";
+$dep = "$logDir/$destSitesVCFFile.OK";
+@cmd = ("$vt index $outputDir/$destSitesVCFFile 2> $logDir/$data.sites.index.log");
+makeStep($tgt, $dep, @cmd);
+
+
+#####################
+#Illumina Platinum v8
+#####################
+#ConfidentRegions.bed.gz  
+$srcVCFFile = "/net/fantasia/home/atks/data/platinum/v8/NA12878.vcf.gz";
+
+$data = "NA12878.illumina.platinum.v8";
 $destVCFFile = "$data.snps.indels.complex.genotypes.$ext";
 $destSitesVCFFile = "$data.snps.indels.complex.sites.$ext";
 
@@ -354,12 +395,37 @@ $dep = "$logDir/$destVCFFile.OK";
 @cmd = ("$vt peek $outputDir/$destVCFFile 2> $logDir/$data.peek.log");
 makeStep($tgt, $dep, @cmd);
 
-#############
-#1000 Genomes
-#############
+################
+#1000 Genomes v5
+################
 $srcVCFFile = "/net/1000g/1000g/release/20130502/supporting/bcf_files/ALL.wgs.phase3_shapeit2_mvncall_integrated_v5.20130502.genotypes.bcf";
 $data = "1000G.v5";
 $destVCFFile = "$data.snps.indels.complex.svs.sites.$ext";
+
+#remove unecessary fields, normalize variants and removing duplicates
+$tgt = "$logDir/$destVCFFile.OK";
+$dep = "$srcVCFFile";
+@cmd = ("$vt view -h $srcVCFFile -s | $vt normalize - -r $refFASTAFile 2> $logDir/$data.normalize.log | $vt uniq - 2> $logDir/$data.uniq.log | $vt annotate_regions - -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
+makeStep($tgt,$dep,@cmd);
+
+#index file
+$tgt = "$logDir/$destVCFFile.$indexExt.OK";
+$dep = "$logDir/$destVCFFile.OK";
+@cmd = ("$vt index $outputDir/$destVCFFile 2> $logDir/$data.index.log");
+makeStep($tgt,$dep,@cmd);
+
+#summarize file
+$tgt = "$logDir/$data.peek.log.OK";
+$dep = "$logDir/$destVCFFile.OK";
+@cmd = ("$vt peek $outputDir/$destVCFFile 2> $logDir/$data.peek.log");
+makeStep($tgt,$dep,@cmd);
+
+###############
+#UK10K 20140722
+###############
+$srcVCFFile = "/net/fantasia/home/atks/data/uk10k/UK10K_COHORT.20140722.sites.vcf.gz";
+$data = "UK10K.20140722";
+$destVCFFile = "$data.snps.indels.sites.$ext";
 
 #remove unecessary fields, normalize variants and removing duplicates
 $tgt = "$logDir/$destVCFFile.OK";
@@ -454,7 +520,8 @@ sub makeStep
     my $cmd = "";
     for my $c (@cmd)
     {
-        $cmd .= "\t" . makeMos($c) . "\n";
+#        $cmd .= "\t" . makeMos($c) . "\n";
+        $cmd .= "\t" . $c . "\n";
     }
     $cmd .= "\ttouch $tgt\n";
     push(@cmds, $cmd);
