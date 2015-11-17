@@ -141,6 +141,25 @@ makeStep($tgt, $dep, @cmd);
 #trf/lobstr regions
 ###################
 my $refBEDFile = "/net/fantasia/home/atks/ref/lobstr/lobstr_v3.0.2_hg19_ref.bed";
+$destBEDFile = "trf.lobstr.bed.gz";
+my $TRFLobstrBEDFile = "$outputDir/$destBEDFile";
+
+#sort and bgzip
+$tgt = "$logDir/$destBEDFile.OK";
+$dep = "$refBEDFile";
+@cmd = ("$binDir/clean_lobstr_trf_bed $refBEDFile | $bedtools sort -i - | bgzip -c > $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
+
+#index
+$tgt = "$logDir/$destBEDFile.tbi.OK";
+$dep = "$logDir/$destBEDFile.OK";
+@cmd = ("tabix -pbed $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
+
+###########################
+#trf/lobstr reference panel
+###########################
+$refBEDFile = "/net/fantasia/home/atks/ref/lobstr/lobstr_v3.0.2_hg19_ref.bed";
 $data = "trf.lobstr";
 $destVCFFile = "$data.sites.$ext";
 
@@ -153,7 +172,7 @@ makeStep($tgt, $dep, @cmd);
 ################
 #Broad OMNI chip
 ################
-$srcVCFFile = "/net/fantasia/home/atks/data/1000g/working/20131122_broad_omni/Omni25_genotypes_2141_samples.b37.v2.vcf.gz";
+$srcVCFFile = "/net/fantasia/home/atks/ref/1000g/working/20131122_broad_omni/Omni25_genotypes_2141_samples.b37.v2.vcf.gz";
 $data = "1000G.omni.chip";
 $destVCFFile = "$data.snps.indels.genotypes.$ext";
 $destSitesVCFFile = "$data.snps.indels.sites.$ext";
@@ -230,7 +249,7 @@ makeStep($tgt, $dep, @cmd);
 #Illumina Platinum v7
 #####################
 #ConfidentRegions.bed.gz  
-$srcVCFFile = "/net/fantasia/home/atks/data/platinum/v7/NA12878.vcf.gz";
+$srcVCFFile = "/net/fantasia/home/atks/ref/platinum/v7/NA12878.vcf.gz";
 
 $data = "NA12878.illumina.platinum.v7";
 $destVCFFile = "$data.snps.indels.complex.genotypes.$ext";
@@ -271,7 +290,7 @@ makeStep($tgt, $dep, @cmd);
 #Illumina Platinum v8
 #####################
 #ConfidentRegions.bed.gz  
-$srcVCFFile = "/net/fantasia/home/atks/data/platinum/v8/NA12878.vcf.gz";
+$srcVCFFile = "/net/fantasia/home/atks/ref/platinum/v8/NA12878.vcf.gz";
 
 $data = "NA12878.illumina.platinum.v8";
 $destVCFFile = "$data.snps.indels.complex.genotypes.$ext";
@@ -335,7 +354,7 @@ makeStep($tgt, $dep, @cmd);
 ###########
 #Mills Chip
 ###########
-$srcVCFFile = "/net/fantasia/home/atks/data/mills/src/mills_indel_genotypes_hg19.vcf";
+$srcVCFFile = "/net/fantasia/home/atks/ref/mills/src/mills_indel_genotypes_hg19.vcf";
 $data = "mills.chip";
 $destVCFFile = "$data.indels.genotypes.$ext";
 $destSitesVCFFile = "$data.indels.sites.$ext";
@@ -423,7 +442,7 @@ makeStep($tgt,$dep,@cmd);
 ###############
 #UK10K 20140722
 ###############
-$srcVCFFile = "/net/fantasia/home/atks/data/uk10k/UK10K_COHORT.20140722.sites.vcf.gz";
+$srcVCFFile = "/net/fantasia/home/atks/ref/uk10k/UK10K_COHORT.20140722.sites.vcf.gz";
 $data = "UK10K.20140722";
 $destVCFFile = "$data.snps.indels.sites.$ext";
 
@@ -448,7 +467,7 @@ makeStep($tgt,$dep,@cmd);
 ######################
 #Affymetrix exome chip
 ######################
-$srcVCFFile = "/net/fantasia/home/atks/data/1000g/working/20120208_axiom_genotypes/src/ALL.wex.axiom.20120206.snps_and_indels.genotypes.vcf.gz";
+$srcVCFFile = "/net/fantasia/home/atks/ref/1000g/working/20120208_axiom_genotypes/src/ALL.wex.axiom.20120206.snps_and_indels.genotypes.vcf.gz";
 $data = "affy.exome.chip";
 $destVCFFile = "$data.snps.indels.complex.genotypes.$ext";
 $destSitesVCFFile = "$data.snps.indels.complex.sites.$ext";

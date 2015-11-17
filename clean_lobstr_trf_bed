@@ -1,0 +1,87 @@
+#!/usr/bin/perl -w
+
+use warnings;
+use strict;
+use POSIX;
+use Getopt::Long;
+use File::Path;
+use File::Basename;
+use Pod::Usage;
+
+=head1 NAME
+
+clean_lobstr_bed
+
+=head1 SYNOPSIS
+
+ clean_lobstr_bed [options]
+
+=head1 DESCRIPTION
+
+ Cleans lobstr trf BED file.
+
+=cut
+
+#option variables
+my $help;
+my $verbose;
+my $debug;
+my $refFASTAFile;
+
+#initialize options
+Getopt::Long::Configure ('bundling');
+
+if(!GetOptions('h'=>\$help, 'v'=>\$verbose, 'd'=>\$debug) ||
+   scalar(@ARGV)!=1)
+{
+    if ($help)
+    {
+        pod2usage(-verbose => 2);
+    }
+    else
+    {
+        pod2usage(1);
+    }
+}
+
+my $lobstrTrfBEDFile = $ARGV[0];
+
+open(BED, "$lobstrTrfBEDFile") || die "Cannot open  $lobstrTrfBEDFile";
+
+#chr1   10001   10468   6   77.2    6   10001   10468   789 33  51  0   15  1.43    TAACCC  .
+#chr1   54713   54817   4   25.8    4   54713   54817   149 0   26  0   72  0.91    TTTC    .
+#chr1   66161   66630   2   262.0   2   66161   66630   339 49  0   0   49  1.08    TA  66205,66632,5,202;
+#chr1   83792   84041   4   64.8    4   83792   84041   335 72  0   28  0   0.86    AAAG    .
+#chr1   99000   99042   4   10.8    4   99000   99042   86  23  0   0   76  0.78    TTTA    .
+#chr1   99047   99116   1   70.0    1   99047   99116   68  0   11  0   88  0.51    T   .
+
+#chr1   : chromosome
+#10001  : start position
+#10468  : end position
+#6      : period size
+#77.2   : copy number
+#789    : purity score
+#33     : %tage A
+#51     : %tage C
+#0      : %tage G
+#15     : %tage T
+#1.43   :
+#TAACCC : STR repeat unit
+#.
+
+#CCCAGCCCACCCATCCCATCCCCGCCCACCCATCCCATCCC   <STR>   .   PASS    RU=CCCAT;RL=43;REF=8.6;PSCORE=41;COMP=17,4,9,68;ENTROPY=1.35
+
+while(<BED>)
+{
+    s/\r?\n?$//;
+
+    my ($chrom, $start, $end, $periodSize, $refCopyNo,
+        $dummy1, $dummy2, $dummy3,
+        $purityScore, $A, $C, $G, $T, $entropy, $repeatUnit, $overlap) = split("\t");
+
+    $chrom =~ s/chr//;
+
+    print "$chrom\t$start\t$end\n";
+}
+
+close(BED);
