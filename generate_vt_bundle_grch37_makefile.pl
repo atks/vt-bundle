@@ -515,6 +515,12 @@ $dep = "$srcVCFFile";
 @cmd = ("$vt annotate_regions $srcVCFFile -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
 makeStep($tgt, $dep, @cmd);
 
+#index sites file
+$tgt = "$logDir/$destVCFFile.$indexExt.OK";
+$dep = "$logDir/$destVCFFile.OK";
+@cmd = ("$vt index $outputDir/$destVCFFile 2> $logDir/$data.sites.index.log");
+makeStep($tgt, $dep, @cmd);
+
 #*******************
 #Write out make file
 #*******************
