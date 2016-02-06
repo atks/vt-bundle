@@ -466,7 +466,7 @@ makeStep($tgt,$dep,@cmd);
 
 ######################
 #Affymetrix exome chip
-######################
+#####################
 $srcVCFFile = "/net/fantasia/home/atks/ref/1000g/working/20120208_axiom_genotypes/src/ALL.wex.axiom.20120206.snps_and_indels.genotypes.vcf.gz";
 $data = "affy.exome.chip";
 $destVCFFile = "$data.snps.indels.complex.genotypes.$ext";
@@ -500,6 +500,19 @@ makeStep($tgt, $dep, @cmd);
 $tgt = "$logDir/$destSitesVCFFile.$indexExt.OK";
 $dep = "$logDir/$destSitesVCFFile.OK";
 @cmd = ("$vt index $outputDir/$destSitesVCFFile 2> $logDir/$data.sites.index.log");
+makeStep($tgt, $dep, @cmd);
+
+###################
+#CODIS STR data set
+###################
+$srcVCFFile = "/net/fantasia/home/atks/ref/codis/codis.sites.vcf";
+$data = "codis";
+$destVCFFile = "$data.strs.sites.$ext";
+
+#annotate variants
+$tgt = "$logDir/$destVCFFile.OK";
+$dep = "$srcVCFFile";
+@cmd = ("$vt annotate_regions $srcVCFFile -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
 makeStep($tgt, $dep, @cmd);
 
 #*******************
@@ -539,7 +552,6 @@ sub makeStep
     my $cmd = "";
     for my $c (@cmd)
     {
-#        $cmd .= "\t" . makeMos($c) . "\n";
         $cmd .= "\t" . $c . "\n";
     }
     $cmd .= "\ttouch $tgt\n";
