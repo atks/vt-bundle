@@ -182,10 +182,29 @@ makeStep($tgt, $dep, @cmd);
 #@cmd = ("$binDir/convert_lobstr_trf_bed_to_vcf $refBEDFile -r $refFASTAFile | $vt sort - | $vt annotate_regions - -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
 #makeStep($tgt, $dep, @cmd);
 
-############################
+##############################
+#trf/repeatseq reference panel
+##############################
+my $refFile = "/net/fantasia/home/atks/programs/repeatseq/regions/hg19.2014.regions.gz";
+$data = "trf.repeatseq";
+$destVCFFile = "$data.sites.$ext";
+
+#sort and bgzip
+$tgt = "$logDir/$destVCFFile.OK";
+$dep = "$refFASTAFile $logDir/$destBEDFile.OK";
+@cmd = ("$binDir/convert_repeatseq_resource_2_vcf $refFile | $vt sort - -o +| $vt annotate_regions + -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
+makeStep($tgt, $dep, @cmd);
+
+#index sites file
+$tgt = "$logDir/$destVCFFile.$indexExt.OK";
+$dep = "$logDir/$destVCFFile.OK";
+@cmd = ("$vt index $outputDir/$destVCFFile 2> $logDir/$data.sites.index.log");
+makeStep($tgt, $dep, @cmd);
+
+#############################
 #trf/VNTRseek reference panel
 #############################
-my $refFile = "/net/fantasia/home/atks/programs/VNTRseek-1.08/resource/hg19/t26__.seq";
+$refFile = "/net/fantasia/home/atks/programs/VNTRseek-1.08/resource/hg19/t26__.seq";
 $data = "trf.vntrseek";
 $destVCFFile = "$data.sites.$ext";
 
@@ -193,6 +212,12 @@ $destVCFFile = "$data.sites.$ext";
 $tgt = "$logDir/$destVCFFile.OK";
 $dep = "$refFASTAFile $logDir/$destBEDFile.OK";
 @cmd = ("$binDir/convert_vntrseek_resource_2_vcf $refFile | $vt sort - -o +| $vt annotate_regions + -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
+makeStep($tgt, $dep, @cmd);
+
+#index sites file
+$tgt = "$logDir/$destVCFFile.$indexExt.OK";
+$dep = "$logDir/$destVCFFile.OK";
+@cmd = ("$vt index $outputDir/$destVCFFile 2> $logDir/$data.sites.index.log");
 makeStep($tgt, $dep, @cmd);
 
 ################

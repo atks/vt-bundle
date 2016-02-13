@@ -1,0 +1,194 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+use POSIX qw(ceil floor);
+use File::Basename;
+use File::Path;
+use Getopt::Long;
+use Pod::Usage;
+
+=head1 NAME
+
+convert_repeatseq_resource_2_vcf
+
+=head1 SYNOPSIS
+
+convert_repeatseq_resource_2_vcf [options] <filename>
+
+    -v  verbose
+    -d  debug
+    -o  output contig directory.
+
+    usage: convert_repeatseq_resource_2_vcf input.txt
+
+    Concatenates Tandem Repeat Finder dat files into a VCF file.
+
+=head1 DESCRIPTION
+
+=cut
+
+#option variables
+my $help;
+my $outputVCFFile;
+
+#initialize options
+Getopt::Long::Configure ('bundling');
+
+if(!GetOptions ('h'=>\$help)
+    || scalar(@ARGV)!=1)
+{
+    if ($help)
+    {
+        pod2usage(-verbose => 2);
+    }
+    else
+    {
+        pod2usage(1);
+    }
+}
+
+my $inputFile = $ARGV[0];
+
+my $refFASTAFile = "/net/fantasia/home/atks/ref/genome/hs37d5.fa";
+
+if ($inputFile =~ /\.gz/)
+{
+    open(IN, "zcat $inputFile |") || die "Cannot open $inputFile";
+}
+else
+{
+    open(IN, ">$outputVCFFile") || die "Cannot open $inputFile";
+}
+
+print "##fileformat=VCFv4.1\n";
+print "##FILTER=<ID=PASS,Description=\"All filters passed\">\n";
+print "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the variant.\">\n";
+print "##INFO=<ID=MOTIF,Number=1,Type=String,Description=\"Canonical motif in a VNTR.\">\n";
+print "##INFO=<ID=MLEN,Number=1,Type=Integer,Description=\"Motif length.\">\n";
+print "##INFO=<ID=REF,Number=1,Type=Float,Description=\"Reference Copy Number\">\n";
+print "##INFO=<ID=TRF_SCORE,Number=1,Type=Integer,Description=\"TRF Score for M/I/D as 2/-7/-7.\">\n";
+print "##INFO=<ID=COMP,Number=4,Type=Integer,Description=\"Composition(%) of bases in an exact repeat tract.\">\n";
+print "##INFO=<ID=ENTROPY,Number=1,Type=Float,Description=\"Entropy measure of a repeat tract (0-2).\">\n";
+print "##INFO=<ID=RU,Number=1,Type=String,Description=\"Repeat unit in the reference sequence.\">\n";
+print "##contig=<ID=1,length=249250621>\n";
+print "##contig=<ID=2,length=243199373>\n";
+print "##contig=<ID=3,length=198022430>\n";
+print "##contig=<ID=4,length=191154276>\n";
+print "##contig=<ID=5,length=180915260>\n";
+print "##contig=<ID=6,length=171115067>\n";
+print "##contig=<ID=7,length=159138663>\n";
+print "##contig=<ID=8,length=146364022>\n";
+print "##contig=<ID=9,length=141213431>\n";
+print "##contig=<ID=10,length=135534747>\n";
+print "##contig=<ID=11,length=135006516>\n";
+print "##contig=<ID=12,length=133851895>\n";
+print "##contig=<ID=13,length=115169878>\n";
+print "##contig=<ID=14,length=107349540>\n";
+print "##contig=<ID=15,length=102531392>\n";
+print "##contig=<ID=16,length=90354753>\n";
+print "##contig=<ID=17,length=81195210>\n";
+print "##contig=<ID=18,length=78077248>\n";
+print "##contig=<ID=19,length=59128983>\n";
+print "##contig=<ID=20,length=63025520>\n";
+print "##contig=<ID=21,length=48129895>\n";
+print "##contig=<ID=22,length=51304566>\n";
+print "##contig=<ID=X,length=155270560>\n";
+print "##contig=<ID=Y,length=59373566>\n";
+print "##contig=<ID=MT,length=16569>\n";
+print "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n";
+
+#chr1:10001-10468   6_77.2_6_10001_10468_789_33_51_0_15_1.43_TAACCC
+#chr1:54713-54817   4_25.8_4_54713_54817_149_0_26_0_72_0.91_TTTC
+#chr1:66161-66630   2_262.0_2_66161_66630_339_49_0_0_49_1.08_TA
+#chr1:83792-84041   4_64.8_4_83792_84041_335_72_0_28_0_0.86_AAAG
+
+while (<IN>)
+{
+    chomp;
+
+    my ($locus, $trfFields) = split("\t");
+    my ($chrom, $beg1, $end1) = split(/[:-]/, $locus);
+    my ($mlen, $refCopyNo, $consensusSize, $beg1_copy, $end1_copy, $trf_score, $A, $C, $G, $T, $entropy, $repeatUnit) = split("_", $trfFields);
+
+    my $motif = motif2cannonical($repeatUnit);
+
+    $chrom =~ s/chr//;
+    my $ref = `vt seq -i $chrom:$beg1-$end1 -r $refFASTAFile -q`;
+    my $alt = "<STR>";
+
+    #fix an incomplete record
+    if ($chrom == 22 && $beg1 ==32083343)
+    {
+        $motif = "T";
+        $entropy = 0;  
+    }
+    
+    print "$chrom\t$beg1\t.\t$ref\t<STR>\t.\tPASS\tEND=$end1;MOTIF=$motif;MLEN=$mlen;REF=$refCopyNo;TRF_SCORE=$trf_score;COMP=$A,$C,$G,$T;ENTROPY=$entropy;RU=$repeatUnit\n";
+}
+
+close(IN);
+
+sub motif2cannonical
+{
+    my $motif = shift;
+    my $motifrc = reverseComplement($motif);
+
+    my @motifs = ();
+
+    for my $i (0..(length($motif)-1))
+    {
+        push(@motifs, shiftBase($motif, $i));
+    }
+
+    @motifs = sort {$a cmp $b} @motifs;
+
+    return $motifs[0];
+}
+
+sub reverseComplement
+{
+    my $seq = shift;
+
+    my $len = length($seq);
+    my $rc = "";
+
+    for my $i (0..($len-1))
+    {
+        $rc .= complement(substr($seq, ($len-1-$i),1));
+    }
+
+    return $rc;
+}
+
+sub shiftBase
+{
+    my ($seq, $i) = @_;
+    my $len = length($seq);
+    if ($i>=$len) {$i = $i%%$len;}
+    my $shifted = substr($seq, $i, ($len-$i)) . substr($seq, 0, $i);
+
+    return $shifted;
+}
+
+sub complement
+{
+    my $base = shift;
+
+    if ($base eq 'A')
+    {
+        return 'T';
+    }
+    elsif ($base eq 'C')
+    {
+        return 'G';
+    }
+    elsif ($base eq 'G')
+    {
+        return 'C';
+    }
+    elsif ($base eq 'T')
+    {
+        return 'A';
+    }
+}
