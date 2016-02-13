@@ -169,6 +169,32 @@ $dep = "$refFASTAFile $logDir/$destBEDFile.OK";
 @cmd = ("$binDir/convert_lobstr_trf_bed_to_vcf $refBEDFile -r $refFASTAFile | $vt sort - | $vt annotate_regions - -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
 makeStep($tgt, $dep, @cmd);
 
+#################################
+#trf/lobstr 1000G reference panel
+#################################
+#$refBEDFile = "/net/fantasia/home/atks/1000g/20130822_phase3_comparison/20130723_phase3_wg/ALL.wgs.v3_lobSTR.20130502.microsat.integrated_light_weight.genotypes.vcf.gz";
+#$data = "1000g.trf.lobstr";
+#$destVCFFile = "$data.sites.$ext";
+#
+##sort and bgzip
+#$tgt = "$logDir/$destVCFFile.OK";
+#$dep = "$refFASTAFile $logDir/$destBEDFile.OK";
+#@cmd = ("$binDir/convert_lobstr_trf_bed_to_vcf $refBEDFile -r $refFASTAFile | $vt sort - | $vt annotate_regions - -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
+#makeStep($tgt, $dep, @cmd);
+
+############################
+#trf/VNTRseek reference panel
+#############################
+my $refFile = "/net/fantasia/home/atks/programs/VNTRseek-1.08/resource/hg19/t26__.seq";
+$data = "trf.vntrseek";
+$destVCFFile = "$data.sites.$ext";
+
+#sort and bgzip
+$tgt = "$logDir/$destVCFFile.OK";
+$dep = "$refFASTAFile $logDir/$destBEDFile.OK";
+@cmd = ("$binDir/convert_vntrseek_resource_2_vcf $refFile | $vt sort - -o +| $vt annotate_regions + -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
+makeStep($tgt, $dep, @cmd);
+
 ################
 #Broad OMNI chip
 ################

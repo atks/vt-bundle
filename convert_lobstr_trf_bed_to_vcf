@@ -83,7 +83,7 @@ my $vcfHdr = <<HDR;
 ##INFO=<ID=MOTIF,Number=1,Type=String,Description="Canonical repeat motif">
 ##INFO=<ID=RL,Number=1,Type=Integer,Description="Reference STR track length in bp">
 ##INFO=<ID=REF,Number=1,Type=Float,Description="Reference copy number">
-##INFO=<ID=PSCORE,Number=1,Type=Float,Description="Purity Score for M/I/D as 2/-7/-7">
+##INFO=<ID=TRF_SCORE,Number=1,Type=Float,Description="TRF Score for M/I/D as 2/-7/-7">
 ##INFO=<ID=COMP,Number=4,Type=Integer,Description="Composition(%) of bases in repeat tract">
 ##INFO=<ID=ENTROPY,Number=1,Type=Float,Description="Entropy measure of repeat tract">
 ##ALT=<ID=STR,Description="Short Tandem Repeat">
@@ -138,7 +138,7 @@ while(<BED>)
         my $refCopyNoBp = int($refCopyNo * length($repeatUnit) + 0.5);
         my $motif = motif2cannonical($repeatUnit);
         
-        print "$chrom\t$start\t.\t$ref\t$alt\t.\tPASS\tRU=$repeatUnit;MOTIF=$motif;RL=$refCopyNoBp;REF=$refCopyNo;PSCORE=$purityScore;COMP=$A,$G,$T,$C;ENTROPY=$entropy\n";
+        print "$chrom\t$start\t.\t$ref\t$alt\t.\tPASS\tRU=$repeatUnit;MOTIF=$motif;RL=$refCopyNoBp;REF=$refCopyNo;TRF_SCORE=$purityScore;COMP=$A,$G,$T,$C;ENTROPY=$entropy\n";
     }
 }
 
