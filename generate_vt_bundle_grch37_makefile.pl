@@ -169,6 +169,12 @@ $dep = "$refFASTAFile $logDir/$destBEDFile.OK";
 @cmd = ("$binDir/convert_lobstr_trf_bed_to_vcf $refBEDFile -r $refFASTAFile | $vt sort - | $vt annotate_regions - -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
 makeStep($tgt, $dep, @cmd);
 
+#index sites file
+$tgt = "$logDir/$destVCFFile.$indexExt.OK";
+$dep = "$logDir/$destVCFFile.OK";
+@cmd = ("$vt index $outputDir/$destVCFFile 2> $logDir/$data.sites.index.log");
+makeStep($tgt, $dep, @cmd);
+
 #################################
 #trf/lobstr 1000G reference panel
 #################################
