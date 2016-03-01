@@ -81,6 +81,7 @@ my $srcVCFFile;
 my $data;
 my $destVCFFile;
 my $destSitesVCFFile;
+my $srcBEDFile;
 
 ###################
 #GENCODE Annotation
@@ -226,6 +227,21 @@ $dep = "$logDir/$destVCFFile.OK";
 @cmd = ("$vt index $outputDir/$destVCFFile 2> $logDir/$data.sites.index.log");
 makeStep($tgt, $dep, @cmd);
 
+#make bed file
+$srcVCFFile = "$data.sites.$ext";
+$destBEDFile = "$data.bed.gz";
+$tgt = "$logDir/$destBEDFile.OK";
+$dep = "$logDir/$srcVCFFile.OK";
+@cmd = ("$binDir/convert_vcf_2_bed $outputDir/$srcVCFFile -o $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
+
+#index bed file
+$srcBEDFile = "$data.bed.gz";
+$tgt = "$logDir/$destBEDFile.tbi.OK";
+$dep = "$logDir/$srcBEDFile.OK";
+@cmd = ("tabix $outputDir/$srcBEDFile");
+makeStep($tgt, $dep, @cmd);
+
 ################
 #Broad OMNI chip
 ################
@@ -237,7 +253,10 @@ $destSitesVCFFile = "$data.snps.indels.sites.$ext";
 #remove unecessary fields, normalize variants and removing duplicates
 $tgt = "$logDir/$destVCFFile.OK";
 $dep = "$srcVCFFile";
-@cmd = ("$binDir/clean_omni_chip $srcVCFFile | $vt normalize - -r $refFASTAFile 2> $logDir/$data.normalize.log | $vt uniq - 2> $logDir/$data.uniq.log | $vt annotate_regions - -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
+@cmd = ("$binDir/clean_omni_chip $srcVCFFile " . 
+      "| $vt normalize - -r $refFASTAFile 2> $logDir/$data.normalize.log " . 
+      "| $vt uniq - 2> $logDir/$data.uniq.log " . 
+      "| $vt annotate_regions - -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
 makeStep($tgt, $dep, @cmd);
 
 #index file

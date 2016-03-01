@@ -1,0 +1,74 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+use POSIX qw(ceil floor);
+use File::Basename;
+use File::Path;
+use Getopt::Long;
+use Pod::Usage;
+
+=head1 NAME
+
+convert_vcf_2_bed
+
+=head1 SYNOPSIS
+
+convert_vcf_2_bed [options] <filename>
+
+    -v  verbose
+    -d  debug
+    -o  output contig directory.
+
+    usage: convert_vcf_2_bed input.vcf
+
+    Converts a VCF file into a corresponding bed file.
+
+=head1 DESCRIPTION
+
+=cut
+
+#option variables
+my $help;
+my $outputBEDFile;
+
+#initialize options
+Getopt::Long::Configure ('bundling');
+
+if(!GetOptions ('h'=>\$help,
+                'o:s'=>\$outputBEDFile)
+    || scalar(@ARGV)!=1)
+{
+    if ($help)
+    {
+        pod2usage(-verbose => 2);
+    }
+    else
+    {
+        pod2usage(1);
+    }
+}
+
+if ($outputBEDFile =~ /bed.gz$/)
+{
+    open(OUT, "| bgzip -c > $outputBEDFile");
+}
+else
+{
+    open(OUT, ">$outputBEDFile");
+}
+
+my $inputVCFFile = $ARGV[0];
+open(IN, "vt view $inputVCFFile |") || die "Cannot open $inputVCFFile";
+
+while (<IN>)
+{
+    chomp;
+
+    my ($chrom, $pos, $id, $ref, $alt, $others) = split("\t");
+    
+    print OUT "$chrom\t$pos\t" . (length($ref)+$pos-1) . "\n";
+}
+
+close(IN);
+close(OUT);
