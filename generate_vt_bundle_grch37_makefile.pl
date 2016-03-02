@@ -138,6 +138,27 @@ $dep = "$logDir/$destBEDFile.OK";
 @cmd = ("tabix -pbed $outputDir/$destBEDFile");
 makeStep($tgt, $dep, @cmd);
 
+#####################
+#repeatmasker regions
+#####################
+my $srcUCSCSQLTableFile = "/net/fantasia/home/atks/ref/ucsc/hg19/rmsk.txt.gz";
+$destBEDFile = "rmsk.bed.gz";
+
+#sort and bgzip
+$tgt = "$logDir/$destBEDFile.OK";
+$dep = "$srcUCSCSQLTableFile";
+@cmd = ("zcat $srcUCSCSQLTableFile | cut -f6-8 | " . 
+        " perl -lane '{\$\$F[0]=~s/chr//; ++\$\$F[1]; print \"\$\$F[0]\\t\$\$F[1]\\t\$\$F[2]\\n\";}' | " . 
+        " $bedtools sort -i - | " . 
+        " bgzip -c > $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
+
+#index
+$tgt = "$logDir/$destBEDFile.tbi.OK";
+$dep = "$logDir/$destBEDFile.OK";
+@cmd = ("tabix -pbed $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
+
 ###################
 #trf/lobstr regions
 ###################
