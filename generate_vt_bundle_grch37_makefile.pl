@@ -315,7 +315,7 @@ $destSitesVCFFile = "$data.snps.indels.complex.sites.$ext";
 #remove unecessary fields, normalize variants and removing duplicates
 $tgt = "$logDir/$destVCFFile.OK";
 $dep = "$srcVCFFile";
-@cmd = ("zcat $srcVCFFile | $vt normalize - -r ~/ref/genome/hs37d5.fa 2> $logDir/$data.normalize.log | $vt uniq - 2> $logDir/$data.uniq.log | $vt annotate_regions - -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
+@cmd = ("zcat $srcVCFFile | $vt normalize - -r $refFASTAFile 2> $logDir/$data.normalize.log | $vt uniq - 2> $logDir/$data.uniq.log | $vt annotate_regions - -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
 makeStep($tgt, $dep, @cmd);
 
 ##index file
@@ -355,7 +355,10 @@ $destSitesVCFFile = "$data.snps.indels.complex.sites.$ext";
 #remove unecessary fields, normalize variants and removing duplicates
 $tgt = "$logDir/$destVCFFile.OK";
 $dep = "$srcVCFFile";
-@cmd = ("$binDir/clean_illumina_platinum $srcVCFFile | $vt normalize - -r ~/ref/genome/hs37d5.fa 2> $logDir/$data.normalize.log | $vt uniq - 2> $logDir/$data.uniq.log | $vt annotate_regions - -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
+@cmd = ("$binDir/clean_illumina_platinum $srcVCFFile " . 
+        "| $vt normalize - -r $refFASTAFile -o + 2> $logDir/$data.normalize.log " .
+        "| $vt uniq - -o + 2> $logDir/$data.uniq.log " . 
+        "| $vt annotate_regions - -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
 makeStep($tgt, $dep, @cmd);
 
 ##index file
@@ -382,11 +385,9 @@ $dep = "$logDir/$destSitesVCFFile.OK";
 @cmd = ("$vt index $outputDir/$destSitesVCFFile 2> $logDir/$data.sites.index.log");
 makeStep($tgt, $dep, @cmd);
 
-
 #####################
 #Illumina Platinum v8
 #####################
-#ConfidentRegions.bed.gz  
 $srcVCFFile = "/net/fantasia/home/atks/ref/platinum/v8/NA12878.vcf.gz";
 
 $data = "NA12878.illumina.platinum.v8";
@@ -396,7 +397,10 @@ $destSitesVCFFile = "$data.snps.indels.complex.sites.$ext";
 #remove unecessary fields, normalize variants and removing duplicates
 $tgt = "$logDir/$destVCFFile.OK";
 $dep = "$srcVCFFile";
-@cmd = ("$binDir/clean_illumina_platinum $srcVCFFile | $vt normalize - -r ~/ref/genome/hs37d5.fa 2> $logDir/$data.normalize.log | $vt uniq - 2> $logDir/$data.uniq.log | $vt annotate_regions - -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
+@cmd = ("$binDir/clean_illumina_platinum $srcVCFFile " . 
+        "| $vt normalize - -r $refFASTAFile -o + 2> $logDir/$data.normalize.log " .
+        "| $vt uniq - -o + 2> $logDir/$data.uniq.log " . 
+        "| $vt annotate_regions - -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
 makeStep($tgt, $dep, @cmd);
 
 ##index file
@@ -421,6 +425,36 @@ makeStep($tgt, $dep, @cmd);
 $tgt = "$logDir/$destSitesVCFFile.$indexExt.OK";
 $dep = "$logDir/$destSitesVCFFile.OK";
 @cmd = ("$vt index $outputDir/$destSitesVCFFile 2> $logDir/$data.sites.index.log");
+makeStep($tgt, $dep, @cmd);
+
+##############################
+#NIST Genome in a Bottle v2.19
+##############################  
+$srcVCFFile = "/net/fantasia/home/atks/ref/giab/v2.19/NISTIntegratedCalls_14datasets_131103_allcall_UGHapMerge_HetHomVarPASS_VQSRv2.19_2mindatasets_5minYesNoRatio_all_nouncert_excludesimplerep_excludesegdups_excludedecoy_excludeRepSeqSTRs_noCNVs.vcf.gz";
+
+$data = "NA12878.nist.giab.v2.19";
+$destVCFFile = "$data.snps.indels.complex.genotypes.$ext";
+$destSitesVCFFile = "$data.snps.indels.complex.sites.$ext";
+
+#add missing header INFO line, normalize variants and remove duplicates
+$tgt = "$logDir/$destVCFFile.OK";
+$dep = "$srcVCFFile";
+@cmd = ("$binDir/clean_nist_giab_v2.19 $srcVCFFile " .
+        "| $vt normalize - -r $refFASTAFile -o + 2> $logDir/$data.normalize.log " .
+        "| $vt uniq - -o + 2> $logDir/$data.uniq.log " . 
+        "| $vt annotate_regions - -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
+makeStep($tgt, $dep, @cmd);
+
+#index file
+$tgt = "$logDir/$destVCFFile.$indexExt.OK";
+$dep = "$logDir/$destVCFFile.OK";
+@cmd = ("$vt index $outputDir/$destVCFFile 2> $logDir/$data.index.log");
+makeStep($tgt, $dep, @cmd);
+
+#summarize file
+$tgt = "$logDir/$data.peek.log.OK";
+$dep = "$logDir/$destVCFFile.OK";
+@cmd = ("$vt peek $outputDir/$destVCFFile 2> $logDir/$data.peek.log");
 makeStep($tgt, $dep, @cmd);
 
 ##################
