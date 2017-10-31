@@ -29,7 +29,7 @@ generate_vt_bundle_grch38_makefile
 my $help;
 my $verbose;
 my $debug;
-my $makeFile = "create_bundle_grch37.mk";
+my $makeFile = "create_bundle_grch38.mk";
 my $ext = "bcf";
 
 #initialize options
@@ -61,20 +61,26 @@ my @cmd;
 #directories
 my $assembly = "grch38";
 my $homeDir = "/net/fantasia/home/atks";
+my $inputDir = "$homeDir/dev/vt/bundle/public/grch37";
 my $outputDir = "$homeDir/dev/vt/bundle/public/$assembly";
 my $binDir = "$homeDir/dev/vt/bundle/bin";
 my $logDir = "$homeDir/dev/vt/bundle/log/$assembly";
+my $auxDir = "$homeDir/dev/vt/bundle/aux/$assembly";
 
 mkpath($outputDir);
 mkpath($logDir);
+mkpath($auxDir);
 
 #programs
 my $vt = "/net/fantasia/home/atks/programs/vt/vt";
 my $bedtools = "/net/fantasia/home/atks/programs/bedtools2/bin/bedtools";
-my $picardtools = "/net/fantasia/home/atks/programs/picard-tools-2.14.0";
+my $picard = "java -jar /net/fantasia/home/atks/programs/picard-tools-2.14.0/picard.jar";
 
 #reference sequence
-my $refFASTAFile = "/net/fantasia/home/atks/ref/genome/hs37d5.fa";
+my $refFASTAFile = "/net/fantasia/home/atks/ref/genome/hs38DH.fa";
+
+#liftover from hg19
+my $hg19Tohg38ChainFile = "/net/fantasia/home/atks//ref/ucsc/hg19/hg19ToHg38.over.chain.gz";
 
 my $indexExt = $ext eq "bcf" ? "csi" : "tbi";
 
@@ -82,83 +88,85 @@ my $srcVCFFile;
 my $data;
 my $destVCFFile;
 my $destSitesVCFFile;
+my $rejectedVCFFile;
+my $rejectedSitesVCFFile;
 my $srcBEDFile;
 
 ###################
 #GENCODE Annotation
 ###################
-#my $srcGTFFile = "/net/fantasia/home/atks/ref/encode/gencode.v19.annotation.gtf.gz";
-#my $destGTFFile = "gencode.v19.annotation.gtf.gz";
-#
-##sort and bgzip
-#$tgt = "$logDir/$destGTFFile.OK";
-#$dep = "$srcGTFFile";
-#@cmd = ("$binDir/clean_gencode_annotation $srcGTFFile | grep -v \"^#\" | sort -V -k1,1 -k4,5 | bgzip -c > $outputDir/$destGTFFile");
-#makeStep($tgt, $dep, @cmd);
-#
-##index
-#$tgt = "$logDir/$destGTFFile.tbi.OK";
-#$dep = "$logDir/$destGTFFile.OK";
-#@cmd = ("tabix -pgff $outputDir/$destGTFFile");
-#makeStep($tgt, $dep, @cmd);
+my $srcGTFFile = "/net/fantasia/home/atks/ref/encode/grch38/gencode.v27.annotation.gtf.gz";
+my $destGTFFile = "gencode.v27.annotation.gtf.gz";
+
+#sort and bgzip
+$tgt = "$logDir/$destGTFFile.OK";
+$dep = "$srcGTFFile";
+@cmd = ("$binDir/clean_gencode_annotation $srcGTFFile | grep -v \"^#\" | sort -V -k1,1 -k4,5 | bgzip -c > $outputDir/$destGTFFile");
+makeStep($tgt, $dep, @cmd);
+
+#index
+$tgt = "$logDir/$destGTFFile.tbi.OK";
+$dep = "$logDir/$destGTFFile.OK";
+@cmd = ("tabix -pgff $outputDir/$destGTFFile");
+makeStep($tgt, $dep, @cmd);
 
 ####################
 #GENCODE CDS regions
 ####################
-#$srcGTFFile = "/net/fantasia/home/atks/ref/encode/gencode.v19.annotation.gtf.gz";
-#my $destBEDFile = "gencode.v19.cds.bed.gz";
-#
-##sort and bgzip
-#$tgt = "$logDir/$destBEDFile.OK";
-#$dep = "$srcGTFFile";
-#@cmd = ("zcat $srcGTFFile | grep -v \"^#\" | sort -V -k1,1 -k4,5 | cut -f1,3,4,5 | grep CDS | cut -f1,3,4 | tr '\\t' ':' | uniq | tr ':' '\\t' | bgzip -c > $outputDir/$destBEDFile");
-#makeStep($tgt, $dep, @cmd);
-#
-##index
-#$tgt = "$logDir/$destBEDFile.tbi.OK";
-#$dep = "$logDir/$destBEDFile.OK";
-#@cmd = ("tabix -pbed $outputDir/$destBEDFile");
-#makeStep($tgt, $dep, @cmd);
+$srcGTFFile = "/net/fantasia/home/atks/ref/encode/grch38/gencode.v27.annotation.gtf.gz";
+my $destBEDFile = "gencode.v27.cds.bed.gz";
+
+#sort and bgzip
+$tgt = "$logDir/$destBEDFile.OK";
+$dep = "$srcGTFFile";
+@cmd = ("zcat $srcGTFFile | grep -v \"^#\" | sort -V -k1,1 -k4,5 | cut -f1,3,4,5 | grep CDS | cut -f1,3,4 | tr '\\t' ':' | uniq | tr ':' '\\t' | bgzip -c > $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
+
+#index
+$tgt = "$logDir/$destBEDFile.tbi.OK";
+$dep = "$logDir/$destBEDFile.OK";
+@cmd = ("tabix -pbed $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
 
 ##############
 #mdust regions
 ##############
-#$refFASTAFile = "/net/fantasia/home/atks/ref/genome/hs37d5.fa";
-#$destBEDFile = "mdust.bed.gz";
-#my $dustBEDFile = "$outputDir/$destBEDFile";
-#
-##sort and bgzip
-#$tgt = "$logDir/$destBEDFile.OK";
-#$dep = "$refFASTAFile";
-#@cmd = ("$binDir/mdust/mdust $refFASTAFile -c | cut -f1,3,4 | bgzip -c > $outputDir/$destBEDFile");
-#makeStep($tgt, $dep, @cmd);
-#
-##index
-#$tgt = "$logDir/$destBEDFile.tbi.OK";
-#$dep = "$logDir/$destBEDFile.OK";
-#@cmd = ("tabix -pbed $outputDir/$destBEDFile");
-#makeStep($tgt, $dep, @cmd);
+$refFASTAFile = "/net/fantasia/home/atks/ref/genome/hs38DH.fa";
+$destBEDFile = "mdust.bed.gz";
+my $dustBEDFile = "$outputDir/$destBEDFile";
+
+#sort and bgzip
+$tgt = "$logDir/$destBEDFile.OK";
+$dep = "$refFASTAFile";
+@cmd = ("$binDir/mdust/mdust $refFASTAFile -c | cut -f1,3,4 | bgzip -c > $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
+
+#index
+$tgt = "$logDir/$destBEDFile.tbi.OK";
+$dep = "$logDir/$destBEDFile.OK";
+@cmd = ("tabix -pbed $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
 
 #####################
 #repeatmasker regions
 #####################
-#my $srcUCSCSQLTableFile = "/net/fantasia/home/atks/ref/ucsc/hg19/rmsk.txt.gz";
-#$destBEDFile = "rmsk.bed.gz";
-#
-##sort and bgzip
-#$tgt = "$logDir/$destBEDFile.OK";
-#$dep = "$srcUCSCSQLTableFile";
-#@cmd = ("zcat $srcUCSCSQLTableFile | cut -f6-8 | " . 
-#        " perl -lane '{\$\$F[0]=~s/chr//; ++\$\$F[1]; print \"\$\$F[0]\\t\$\$F[1]\\t\$\$F[2]\\n\";}' | " . 
-#        " $bedtools sort -i - | " . 
-#        " bgzip -c > $outputDir/$destBEDFile");
-#makeStep($tgt, $dep, @cmd);
-#
-##index
-#$tgt = "$logDir/$destBEDFile.tbi.OK";
-#$dep = "$logDir/$destBEDFile.OK";
-#@cmd = ("tabix -pbed $outputDir/$destBEDFile");
-#makeStep($tgt, $dep, @cmd);
+my $srcUCSCSQLTableFile = "/net/fantasia/home/atks/ref/ucsc/hg38/rmsk.txt.gz";
+$destBEDFile = "rmsk.bed.gz";
+
+#sort and bgzip
+$tgt = "$logDir/$destBEDFile.OK";
+$dep = "$srcUCSCSQLTableFile";
+@cmd = ("zcat $srcUCSCSQLTableFile | cut -f6-8 | " . 
+        " perl -lane '{++\$\$F[1]; print \"\$\$F[0]\\t\$\$F[1]\\t\$\$F[2]\\n\";}' | " . 
+        " $bedtools sort -i - | " . 
+        " bgzip -c > $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
+
+#index
+$tgt = "$logDir/$destBEDFile.tbi.OK";
+$dep = "$logDir/$destBEDFile.OK";
+@cmd = ("tabix -pbed $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
 
 ###################
 #trf/lobstr regions
@@ -182,21 +190,39 @@ my $srcBEDFile;
 ###########################
 #trf/lobstr reference panel
 ###########################
-#$refBEDFile = "/net/fantasia/home/atks/ref/lobstr/lobstr_v3.0.2_hg19_ref.bed";
-#$data = "trf.lobstr";
-#$destVCFFile = "$data.sites.$ext";
-#
-##sort and bgzip
-#$tgt = "$logDir/$destVCFFile.OK";
-#$dep = "$refFASTAFile $logDir/$destBEDFile.OK";
-#@cmd = ("$binDir/convert_lobstr_trf_bed_to_vcf $refBEDFile -r $refFASTAFile | $vt sort - | $vt annotate_regions - -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
-#makeStep($tgt, $dep, @cmd);
-#
-##index sites file
-#$tgt = "$logDir/$destVCFFile.$indexExt.OK";
-#$dep = "$logDir/$destVCFFile.OK";
-#@cmd = ("$vt index $outputDir/$destVCFFile 2> $logDir/$data.sites.index.log");
-#makeStep($tgt, $dep, @cmd);
+$data = "trf.lobstr";
+$destVCFFile = "$data.sites.$ext";
+
+$grch37CVCFFile = "$homeDir/dev/vt/bundle/public/grch37/$data.sites.$ext";
+
+$intermediateVCFFile = "$auxDir/$data.sites.$ext";
+
+$rejectedVCFFile = "$data.rejected.sites.$ext";
+
+my $inputDir = "$homeDir/dev/vt/bundle/public/grch37";
+
+#rename contigs and convert to vcf.gz
+$tgt = "$auxDir/$destVCFFile.OK";
+$dep = "$refFASTAFile $logDir/$destBEDFile.OK";
+@cmd = ("vt view -h $grch37CVCFFile | bin/add_prefix_chr_to_chromosome_names - > $auxDir/$destVCFFile");
+makeStep($tgt, $dep, @cmd);
+
+#sort and bgzip
+$tgt = "$logDir/$destVCFFile.OK";
+$dep = "$refFASTAFile $logDir/$destBEDFile.OK";
+@cmd = ("$picard LiftoverVcf CHAIN=$hg19Tohg38ChainFile " .
+                           " R=$refFASTAFile " .
+                           " I=$auxDir/$destVCFFile " .
+                           " O=$outputDir/$destVCFFile " .
+                           " REJECT=$rejectedVCFFile " .
+                           " 2> $logFile")                           
+makeStep($tgt, $dep, @cmd);
+
+#index sites file
+$tgt = "$logDir/$destVCFFile.$indexExt.OK";
+$dep = "$logDir/$destVCFFile.OK";
+@cmd = ("$vt index $outputDir/$destVCFFile 2> $logDir/$data.sites.index.log");
+makeStep($tgt, $dep, @cmd);
 
 #################################
 #trf/lobstr 1000G reference panel
@@ -303,7 +329,7 @@ my $srcBEDFile;
 #$tgt = "$logDir/$data.peek.log.OK";
 #$dep = "$logDir/$destSitesVCFFile.OK";
 #@cmd = ("$vt peek $outputDir/$destSitesVCFFile 2> $logDir/$data.peek.log");
-makeStep($tgt, $dep, @cmd);
+#makeStep($tgt, $dep, @cmd);
 
 ####################
 #Broad Knowledgebase
@@ -341,7 +367,7 @@ makeStep($tgt, $dep, @cmd);
 #$tgt = "$logDir/$destSitesVCFFile.$indexExt.OK";
 #$dep = "$logDir/$destSitesVCFFile.OK";
 #@cmd = ("$vt index $outputDir/$destSitesVCFFile 2> $logDir/$data.sites.index.log");
-makeStep($tgt, $dep, @cmd);
+#makeStep($tgt, $dep, @cmd);
 
 #####################
 #Illumina Platinum v7
@@ -426,7 +452,7 @@ makeStep($tgt, $dep, @cmd);
 #$tgt = "$logDir/$destSitesVCFFile.$indexExt.OK";
 #$dep = "$logDir/$destSitesVCFFile.OK";
 #@cmd = ("$vt index $outputDir/$destSitesVCFFile 2> $logDir/$data.sites.index.log");
-makeStep($tgt, $dep, @cmd);
+#makeStep($tgt, $dep, @cmd);
 
 ##############################
 #NIST Genome in a Bottle v2.19
@@ -652,25 +678,25 @@ makeStep($tgt, $dep, @cmd);
 #$dep = "$logDir/$destVCFFile.OK";
 #@cmd = ("$vt index $outputDir/$destVCFFile 2> $logDir/$data.sites.index.log");
 #makeStep($tgt, $dep, @cmd);
-#
-##*******************
-##Write out make file
-##*******************
-#open(MAK,">$makeFile") || die "Cannot open $makeFile\n";
-#print MAK ".DELETE_ON_ERROR:\n\n";
-#print MAK "all: @tgts\n\n";
-#
-##clean
-#push(@tgts,"clean");
-#$dep = push(@deps, "");
-#$cmd = ("\t-rm -rf $outputDir/*.bcf $outputDir/*.gz $outputDir/*.bcf.csi $outputDir/*.gz.tbi $logDir");
-#push(@cmds, $cmd);
-#
-#for(my $i=0; $i < @tgts; ++$i) 
-#{
-#    print MAK "$tgts[$i]: $deps[$i]\n";
-#    print MAK "$cmds[$i]\n";
-#}
+
+#*******************
+#Write out make file
+#*******************
+open(MAK,">$makeFile") || die "Cannot open $makeFile\n";
+print MAK ".DELETE_ON_ERROR:\n\n";
+print MAK "all: @tgts\n\n";
+
+#clean
+push(@tgts,"clean");
+$dep = push(@deps, "");
+$cmd = ("\t-rm -rf $outputDir/*.bcf $outputDir/*.gz $outputDir/*.bcf.csi $outputDir/*.gz.tbi $logDir");
+push(@cmds, $cmd);
+
+for(my $i=0; $i < @tgts; ++$i) 
+{
+    print MAK "$tgts[$i]: $deps[$i]\n";
+    print MAK "$cmds[$i]\n";
+}
 
 ##########
 #functions

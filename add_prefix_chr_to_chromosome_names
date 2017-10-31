@@ -1,0 +1,93 @@
+#!/usr/bin/perl -w
+
+use warnings;
+use strict;
+use POSIX;
+use Getopt::Long;
+use File::Path;
+use File::Basename;
+use Pod::Usage;
+
+=head1 NAME
+
+add_prefix_chr_to_chromosome_names
+
+=head1 SYNOPSIS
+
+ add_prefix_chr_to_chromosome_names [options]  
+  
+=head1 DESCRIPTION
+ 
+ Adds chr prefix to chromosome names.  
+ 
+=cut
+
+#option variables
+my $help;
+my $verbose;
+my $debug;
+
+#initialize options
+Getopt::Long::Configure ('bundling');
+
+if(!GetOptions ('h'=>\$help, 'v'=>\$verbose, 'd'=>\$debug) 
+  || scalar(@ARGV)!=1)
+{
+    if ($help)
+    {
+        pod2usage(-verbose => 2);
+    }
+    else
+    {
+        pod2usage(1);
+    }
+}
+
+my $inputVCFFile = $ARGV[0];
+
+if ($inputVCFFile ne "-")
+{
+    open(VCF, $inputVCFFile);
+
+    while(<VCF>)
+    {
+        chomp;
+        
+        if (/^#/)
+        {
+            if (/^##contig=<ID=/)
+            {
+                s/ID=/ID=chr/;
+            }
+            
+            print "$_\n";
+        }
+        else
+        {
+            print "chr$_\n";
+        }
+    }
+    
+    close(VCF);
+}
+else
+{
+    while(<STDIN>)
+    {
+        chomp;
+        
+        if (/^#/)
+        {
+            if (/^##contig=<ID=/)
+            {
+                s/ID=/ID=chr/;
+            }
+            
+            print "$_\n"; 
+        }
+        else
+        {
+            print "chr$_\n";
+        }
+    }    
+}
