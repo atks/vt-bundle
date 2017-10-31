@@ -45,9 +45,7 @@ if(!GetOptions ('h'=>\$help, 'v'=>\$verbose, 'd'=>\$debug)
 
 my $inputChainFile = $ARGV[0];
 
-if ($inputChainFile =~ "/\.gz$/")
-
-open(CHAIN, $inputChainFile=~"/\.gz$/"? : "gzip -d $inputCHainFile" : "$inputChainFile");
+open(CHAIN, $inputChainFile=~/\.gz$/ ? "gzip -dc $inputChainFile |" : "$inputChainFile");
 
 while(<CHAIN>)
 {
@@ -55,11 +53,15 @@ while(<CHAIN>)
 
     if (/^chain/)
     {
-        $F[2]=~s/^chr//; $a=join(" ", @F);print "$a\n";
+        my @F = split(" ");
+        
+        $F[2] =~ s/^chr//; 
+        $a=join(" ", @F);
+        print "$a\n";
     }
     else
     {
-        print "$_";
+        print "$_\n";
     }
 }
 

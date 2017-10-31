@@ -184,6 +184,35 @@ my $TRFLobstrBEDFile = "$outputDir/$destBEDFile";
 
 java -jar /net/fantasia/home/atks/programs/picard-tools-2.14.0/picard.jar BedToIntervalList I=rmsk.bed O=rmsk.interval.list SD=hs37d5.dict
 
+#convert bed file to have correct starting position
+
+
+#sort and bgzip
+$tgt = "$grch38Dir/$destBEDFile.OK";
+$dep = "$refBEDFile";
+@cmd = ("$binDir/clean_lobstr_trf_bed $refBEDFile | $bedtools sort -i - | bgzip -c > $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
+
+
+#convert bed file to interval list
+java -jar /net/fantasia/home/atks/programs/picard-tools-2.14.0/picard.jar BedToIntervalList I=trf.lobstr.bed.gz O=trf.lobstr.interval.list SD=hs37d5.dict
+#liftover interval list
+java -jar /net/fantasia/home/atks/programs/picard-tools-2.14.0/picard.jar LiftOverIntervalList I=trf.lobstr.interval.list O=trf.lobstr.grch38.interval.list SD=hs38DH.dict CHAIN=hs37ToHg38.over.chain.gz
+#convert interval list back to bed file
+
+
+#sort and bgzip
+$tgt = "$grch38Dir/$destBEDFile.OK";
+$dep = "$refBEDFile";
+@cmd = ("$binDir/clean_lobstr_trf_bed $refBEDFile | $bedtools sort -i - | bgzip -c > $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
+
+
+$tgt = "$grch38auxDir/$data.chr_prefixed.sites.vcf.gz.OK";
+$dep = "$grch37logDir/$data.sites.$ext.OK";
+@cmd = ("vt view -h $grch37outputDir/$data.sites.$ext | bin/add_prefix_chr_to_chromosome_names - | bgzip -c > $grch38auxDir/$data.chr_prefixed.sites.vcf.gz");
+makeStep($tgt, $dep, @cmd);
+
 
 #sort and bgzip
 $tgt = "$logDir/$destBEDFile.OK";
@@ -202,7 +231,7 @@ makeStep($tgt, $dep, @cmd);
 ###########################
 $data = "trf.lobstr";
 
-#rename contigs and convert to vcf.gz
+#rename contigs and convert to vcf.gz as picard cannot read bcf files
 $tgt = "$grch38auxDir/$data.chr_prefixed.sites.vcf.gz.OK";
 $dep = "$grch37logDir/$data.sites.$ext.OK";
 @cmd = ("vt view -h $grch37outputDir/$data.sites.$ext | bin/add_prefix_chr_to_chromosome_names - | bgzip -c > $grch38auxDir/$data.chr_prefixed.sites.vcf.gz");

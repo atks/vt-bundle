@@ -69,7 +69,7 @@ mkpath($outputDir);
 mkpath($logDir);
 
 #programs
-my $vt = "/net/fantasia/home/atks/programs/vt/vt";
+my $vt = "/net/fantasia/home/atks/vt/vt";
 my $bedtools = "/net/fantasia/home/atks/programs/bedtools2/bin/bedtools";
 
 #reference sequence
@@ -148,7 +148,7 @@ $destBEDFile = "rmsk.bed.gz";
 $tgt = "$logDir/$destBEDFile.OK";
 $dep = "$srcUCSCSQLTableFile";
 @cmd = ("zcat $srcUCSCSQLTableFile | cut -f6-8 | " . 
-        " perl -lane '{\$\$F[0]=~s/chr//; ++\$\$F[1]; if (!/_/) {print \"\$\$F[0]\\t\$\$F[1]\\t\$\$F[2]\\n\";}}' | " . 
+        " perl -lane '{\$\$F[0]=~s/chr//; if (!/_/) {print \"\$\$F[0]\\t\$\$F[1]\\t\$\$F[2]\\n\";}}' | " . 
         " $bedtools sort -i - | " . 
         " sort -V | " .
         " bgzip -c > $outputDir/$destBEDFile");

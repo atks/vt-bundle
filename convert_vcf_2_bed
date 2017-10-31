@@ -67,7 +67,9 @@ while (<IN>)
 
     my ($chrom, $pos, $id, $ref, $alt, $others) = split("\t");
     
-    print OUT "$chrom\t$pos\t" . (length($ref)+$pos-1) . "\n";
+    --$pos;
+    
+    print OUT "$chrom\t$pos\t" . (length($ref)+$pos) . "\n";
 }
 
 close(IN);
