@@ -14,15 +14,15 @@ generate_vt_bundle_grch38_makefile
 
 =head1 SYNOPSIS
 
- generate_vt_bundles_grch38_makefile [options]  
- 
+ generate_vt_bundles_grch38_makefile [options]
+
  --cluster cluster (default main)
   -m       output make file
-   
+
  example: codes/bin/generate_vt_bundles_makefile -m make_ref.mk --chr 20 --cluster 1000g
- 
+
 =head1 DESCRIPTION
- 
+
 =cut
 
 #option variables
@@ -36,7 +36,7 @@ my $ext = "bcf";
 Getopt::Long::Configure ('bundling');
 
 if(!GetOptions ('h'=>\$help, 'v'=>\$verbose, 'd'=>\$debug,
-                'e:s' => \$ext) 
+                'e:s' => \$ext)
   || scalar(@ARGV)!=0)
 {
     if ($help)
@@ -61,18 +61,23 @@ my @cmd;
 #directories
 my $assembly = "grch38";
 my $homeDir = "/net/fantasia/home/atks";
-my $inputDir = "$homeDir/dev/vt/bundle/public/grch37";
-my $outputDir = "$homeDir/dev/vt/bundle/public/$assembly";
 my $binDir = "$homeDir/dev/vt/bundle/bin";
+my $outputDir = "$homeDir/dev/vt/bundle/public/$assembly";
+my $grch37outputDir = "$homeDir/dev/vt/bundle/public/grch37";
+my $grch38outputDir = "$homeDir/dev/vt/bundle/public/grch38";
 my $logDir = "$homeDir/dev/vt/bundle/log/$assembly";
+my $grch37logDir = "$homeDir/dev/vt/bundle/log/grch37";
+my $grch38logDir = "$homeDir/dev/vt/bundle/log/grch38";
 my $auxDir = "$homeDir/dev/vt/bundle/aux/$assembly";
+my $grch37auxDir = "$homeDir/dev/vt/bundle/aux/grch37";
+my $grch38auxDir = "$homeDir/dev/vt/bundle/aux/grch38";
 
 mkpath($outputDir);
 mkpath($logDir);
 mkpath($auxDir);
 
 #programs
-my $vt = "/net/fantasia/home/atks/programs/vt/vt";
+my $vt = "/net/fantasia/home/atks/vt/vt";
 my $bedtools = "/net/fantasia/home/atks/programs/bedtools2/bin/bedtools";
 my $picard = "java -jar /net/fantasia/home/atks/programs/picard-tools-2.14.0/picard.jar";
 
@@ -157,8 +162,9 @@ $destBEDFile = "rmsk.bed.gz";
 $tgt = "$logDir/$destBEDFile.OK";
 $dep = "$srcUCSCSQLTableFile";
 @cmd = ("zcat $srcUCSCSQLTableFile | cut -f6-8 | " . 
-        " perl -lane '{++\$\$F[1]; print \"\$\$F[0]\\t\$\$F[1]\\t\$\$F[2]\\n\";}' | " . 
+        " perl -lane '{++\$\$F[1]; if (!/_/) {print \"\$\$F[0]\\t\$\$F[1]\\t\$\$F[2]\\n\";}}' | " . 
         " $bedtools sort -i - | " . 
+        " sort -V | " .
         " bgzip -c > $outputDir/$destBEDFile");
 makeStep($tgt, $dep, @cmd);
 
@@ -171,57 +177,58 @@ makeStep($tgt, $dep, @cmd);
 ###################
 #trf/lobstr regions
 ###################
-#my $refBEDFile = "/net/fantasia/home/atks/ref/lobstr/lobstr_v3.0.2_hg19_ref.bed";
-#$destBEDFile = "trf.lobstr.bed.gz";
-#my $TRFLobstrBEDFile = "$outputDir/$destBEDFile";
-#
-##sort and bgzip
-#$tgt = "$logDir/$destBEDFile.OK";
-#$dep = "$refBEDFile";
-#@cmd = ("$binDir/clean_lobstr_trf_bed $refBEDFile | $bedtools sort -i - | bgzip -c > $outputDir/$destBEDFile");
-#makeStep($tgt, $dep, @cmd);
-#
-##index
-#$tgt = "$logDir/$destBEDFile.tbi.OK";
-#$dep = "$logDir/$destBEDFile.OK";
-#@cmd = ("tabix -pbed $outputDir/$destBEDFile");
-#makeStep($tgt, $dep, @cmd);
+my $refBEDFile = "/net/fantasia/home/atks/ref/lobstr/lobstr_v3.0.2_hg19_ref.bed";
+$destBEDFile = "trf.lobstr.bed.gz";
+my $TRFLobstrBEDFile = "$outputDir/$destBEDFile";
+
+
+java -jar /net/fantasia/home/atks/programs/picard-tools-2.14.0/picard.jar BedToIntervalList I=rmsk.bed O=rmsk.interval.list SD=hs37d5.dict
+
+
+#sort and bgzip
+$tgt = "$logDir/$destBEDFile.OK";
+$dep = "$refBEDFile";
+@cmd = ("$binDir/clean_lobstr_trf_bed $refBEDFile | $bedtools sort -i - | bgzip -c > $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
+
+#index
+$tgt = "$logDir/$destBEDFile.tbi.OK";
+$dep = "$logDir/$destBEDFile.OK";
+@cmd = ("tabix -pbed $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
 
 ###########################
 #trf/lobstr reference panel
 ###########################
 $data = "trf.lobstr";
-$destVCFFile = "$data.sites.$ext";
-
-$grch37CVCFFile = "$homeDir/dev/vt/bundle/public/grch37/$data.sites.$ext";
-
-$intermediateVCFFile = "$auxDir/$data.sites.$ext";
-
-$rejectedVCFFile = "$data.rejected.sites.$ext";
-
-my $inputDir = "$homeDir/dev/vt/bundle/public/grch37";
 
 #rename contigs and convert to vcf.gz
-$tgt = "$auxDir/$destVCFFile.OK";
-$dep = "$refFASTAFile $logDir/$destBEDFile.OK";
-@cmd = ("vt view -h $grch37CVCFFile | bin/add_prefix_chr_to_chromosome_names - > $auxDir/$destVCFFile");
+$tgt = "$grch38auxDir/$data.chr_prefixed.sites.vcf.gz.OK";
+$dep = "$grch37logDir/$data.sites.$ext.OK";
+@cmd = ("vt view -h $grch37outputDir/$data.sites.$ext | bin/add_prefix_chr_to_chromosome_names - | bgzip -c > $grch38auxDir/$data.chr_prefixed.sites.vcf.gz");
 makeStep($tgt, $dep, @cmd);
 
 #sort and bgzip
-$tgt = "$logDir/$destVCFFile.OK";
-$dep = "$refFASTAFile $logDir/$destBEDFile.OK";
+$tgt = "$grch38auxDir/$data.sites.vcf.gz.OK";
+$dep = "$refFASTAFile $grch38auxDir/$data.chr_prefixed.sites.vcf.gz.OK";
 @cmd = ("$picard LiftoverVcf CHAIN=$hg19Tohg38ChainFile " .
                            " R=$refFASTAFile " .
-                           " I=$auxDir/$destVCFFile " .
-                           " O=$outputDir/$destVCFFile " .
-                           " REJECT=$rejectedVCFFile " .
-                           " 2> $logFile")                           
+                           " I=$grch38auxDir/$data.chr_prefixed.sites.vcf.gz " .
+                           " O=$grch38auxDir/$data.sites.vcf.gz " .
+                           " REJECT=$grch38auxDir/$data.rejected.sites.vcf.gz " .
+                           " 2> $grch38logDir/$data.liftover.log");
+makeStep($tgt, $dep, @cmd);
+
+#convert to ext
+$tgt = "$grch38logDir/$data.sites.$ext.OK";
+$dep = "$grch38auxDir/$data.sites.vcf.gz.OK";
+@cmd = ("$vt view $grch38auxDir/$data.sites.vcf.gz -o $grch38outputDir/$data.sites.$ext");
 makeStep($tgt, $dep, @cmd);
 
 #index sites file
-$tgt = "$logDir/$destVCFFile.$indexExt.OK";
-$dep = "$logDir/$destVCFFile.OK";
-@cmd = ("$vt index $outputDir/$destVCFFile 2> $logDir/$data.sites.index.log");
+$tgt = "$grch38logDir/$data.sites.$ext.$indexExt.OK";
+$dep = "$grch38logDir/$data.sites.$ext.OK";
+@cmd = ("$vt index $grch38outputDir/$data.sites.$ext 2> $grch38logDir/$data.sites.$ext.index.log");
 makeStep($tgt, $dep, @cmd);
 
 #################################
@@ -301,9 +308,9 @@ makeStep($tgt, $dep, @cmd);
 ##remove unecessary fields, normalize variants and removing duplicates
 #$tgt = "$logDir/$destVCFFile.OK";
 #$dep = "$srcVCFFile";
-#@cmd = ("$binDir/clean_omni_chip $srcVCFFile " . 
-#      "| $vt normalize - -r $refFASTAFile 2> $logDir/$data.normalize.log " . 
-#      "| $vt uniq - 2> $logDir/$data.uniq.log " . 
+#@cmd = ("$binDir/clean_omni_chip $srcVCFFile " .
+#      "| $vt normalize - -r $refFASTAFile 2> $logDir/$data.normalize.log " .
+#      "| $vt uniq - 2> $logDir/$data.uniq.log " .
 #      "| $vt annotate_regions - -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
 #makeStep($tgt, $dep, @cmd);
 #
@@ -372,7 +379,7 @@ makeStep($tgt, $dep, @cmd);
 #####################
 #Illumina Platinum v7
 #####################
-#ConfidentRegions.bed.gz  
+#ConfidentRegions.bed.gz
 #$srcVCFFile = "/net/fantasia/home/atks/ref/platinum/v7/NA12878.vcf.gz";
 #
 #$data = "NA12878.illumina.platinum.v7";
@@ -382,9 +389,9 @@ makeStep($tgt, $dep, @cmd);
 ##remove unecessary fields, normalize variants and removing duplicates
 #$tgt = "$logDir/$destVCFFile.OK";
 #$dep = "$srcVCFFile";
-#@cmd = ("$binDir/clean_illumina_platinum $srcVCFFile " . 
+#@cmd = ("$binDir/clean_illumina_platinum $srcVCFFile " .
 #        "| $vt normalize - -r $refFASTAFile -o + 2> $logDir/$data.normalize.log " .
-#        "| $vt uniq - -o + 2> $logDir/$data.uniq.log " . 
+#        "| $vt uniq - -o + 2> $logDir/$data.uniq.log " .
 #        "| $vt annotate_regions - -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
 #makeStep($tgt, $dep, @cmd);
 #
@@ -424,9 +431,9 @@ makeStep($tgt, $dep, @cmd);
 ##remove unecessary fields, normalize variants and removing duplicates
 #$tgt = "$logDir/$destVCFFile.OK";
 #$dep = "$srcVCFFile";
-#@cmd = ("$binDir/clean_illumina_platinum $srcVCFFile " . 
+#@cmd = ("$binDir/clean_illumina_platinum $srcVCFFile " .
 #        "| $vt normalize - -r $refFASTAFile -o + 2> $logDir/$data.normalize.log " .
-#        "| $vt uniq - -o + 2> $logDir/$data.uniq.log " . 
+#        "| $vt uniq - -o + 2> $logDir/$data.uniq.log " .
 #        "| $vt annotate_regions - -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
 #makeStep($tgt, $dep, @cmd);
 #
@@ -456,7 +463,7 @@ makeStep($tgt, $dep, @cmd);
 
 ##############################
 #NIST Genome in a Bottle v2.19
-##############################  
+##############################
 #$srcVCFFile = "/net/fantasia/home/atks/ref/giab/v2.19/NISTIntegratedCalls_14datasets_131103_allcall_UGHapMerge_HetHomVarPASS_VQSRv2.19_2mindatasets_5minYesNoRatio_all_nouncert_excludesimplerep_excludesegdups_excludedecoy_excludeRepSeqSTRs_noCNVs.vcf.gz";
 #
 #$data = "NA12878.nist.giab.v2.19";
@@ -468,7 +475,7 @@ makeStep($tgt, $dep, @cmd);
 #$dep = "$srcVCFFile";
 #@cmd = ("$binDir/clean_nist_giab_v2.19 $srcVCFFile " .
 #        "| $vt normalize - -r $refFASTAFile -o + 2> $logDir/$data.normalize.log " .
-#        "| $vt uniq - -o + 2> $logDir/$data.uniq.log " . 
+#        "| $vt uniq - -o + 2> $logDir/$data.uniq.log " .
 #        "| $vt annotate_regions - -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
 #makeStep($tgt, $dep, @cmd);
 #
@@ -692,7 +699,7 @@ $dep = push(@deps, "");
 $cmd = ("\t-rm -rf $outputDir/*.bcf $outputDir/*.gz $outputDir/*.bcf.csi $outputDir/*.gz.tbi $logDir");
 push(@cmds, $cmd);
 
-for(my $i=0; $i < @tgts; ++$i) 
+for(my $i=0; $i < @tgts; ++$i)
 {
     print MAK "$tgts[$i]: $deps[$i]\n";
     print MAK "$cmds[$i]\n";
@@ -703,14 +710,14 @@ for(my $i=0; $i < @tgts; ++$i)
 ##########
 sub makeMos
 {
-    my $cmd = shift;    
+    my $cmd = shift;
     return ("mosbatch -E/tmp -i -r`/net/fantasia/home/atks/programs/cluster/pick_mini_node` /bin/bash -c 'set pipefail; $cmd'");
 }
 
 sub makeStep
 {
     my ($tgt, $dep, @cmd) = @_;
-    
+
     push(@tgts, $tgt);
     push(@deps, $dep);
     my $cmd = "";

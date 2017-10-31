@@ -1,0 +1,68 @@
+#!/usr/bin/perl -w
+
+use warnings;
+use strict;
+use POSIX;
+use Getopt::Long;
+use File::Path;
+use File::Basename;
+use Pod::Usage;
+
+=head1 NAME
+
+add_prefix_chr_to_chromosome_names
+
+=head1 SYNOPSIS
+
+ convert_hg19chain_to_hs37d5chain [options]
+
+=head1 DESCRIPTION
+
+ Removes chr prefix of chromosome names for hg19.
+
+=cut
+
+#option variables
+my $help;
+my $verbose;
+my $debug;
+
+#initialize options
+Getopt::Long::Configure ('bundling');
+
+if(!GetOptions ('h'=>\$help, 'v'=>\$verbose, 'd'=>\$debug)
+  || scalar(@ARGV)!=1)
+{
+    if ($help)
+    {
+        pod2usage(-verbose => 2);
+    }
+    else
+    {
+        pod2usage(1);
+    }
+}
+
+my $inputChainFile = $ARGV[0];
+
+if ($inputChainFile =~ "/\.gz$/")
+
+open(CHAIN, $inputChainFile=~"/\.gz$/"? : "gzip -d $inputCHainFile" : "$inputChainFile");
+
+while(<CHAIN>)
+{
+    chomp;
+
+    if (/^chain/)
+    {
+        $F[2]=~s/^chr//; $a=join(" ", @F);print "$a\n";
+    }
+    else
+    {
+        print "$_";
+    }
+}
+
+close(CHAIN);
+
+

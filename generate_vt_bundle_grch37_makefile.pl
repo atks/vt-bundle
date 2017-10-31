@@ -86,7 +86,7 @@ my $srcBEDFile;
 ###################
 #GENCODE Annotation
 ###################
-my $srcGTFFile = "/net/fantasia/home/atks/ref/encode/gencode.v19.annotation.gtf.gz";
+my $srcGTFFile = "/net/fantasia/home/atks/ref/encode/grch37/gencode.v19.annotation.gtf.gz";
 my $destGTFFile = "gencode.v19.annotation.gtf.gz";
 
 #sort and bgzip
@@ -104,7 +104,7 @@ makeStep($tgt, $dep, @cmd);
 ####################
 #GENCODE CDS regions
 ####################
-$srcGTFFile = "/net/fantasia/home/atks/ref/encode/gencode.v19.annotation.gtf.gz";
+$srcGTFFile = "/net/fantasia/home/atks/ref/encode/grch37/gencode.v19.annotation.gtf.gz";
 my $destBEDFile = "gencode.v19.cds.bed.gz";
 
 #sort and bgzip
@@ -148,8 +148,9 @@ $destBEDFile = "rmsk.bed.gz";
 $tgt = "$logDir/$destBEDFile.OK";
 $dep = "$srcUCSCSQLTableFile";
 @cmd = ("zcat $srcUCSCSQLTableFile | cut -f6-8 | " . 
-        " perl -lane '{\$\$F[0]=~s/chr//; ++\$\$F[1]; print \"\$\$F[0]\\t\$\$F[1]\\t\$\$F[2]\\n\";}' | " . 
+        " perl -lane '{\$\$F[0]=~s/chr//; ++\$\$F[1]; if (!/_/) {print \"\$\$F[0]\\t\$\$F[1]\\t\$\$F[2]\\n\";}}' | " . 
         " $bedtools sort -i - | " . 
+        " sort -V | " .
         " bgzip -c > $outputDir/$destBEDFile");
 makeStep($tgt, $dep, @cmd);
 
