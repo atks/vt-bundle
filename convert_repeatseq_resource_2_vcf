@@ -118,7 +118,7 @@ while (<IN>)
     my $alt = "<STR>";
 
     #fix an incomplete record
-    if ($chrom == 22 && $beg1 ==32083343)
+    if ($chrom eq "22" && $beg1 ==32083343)
     {
         $motif = "T";
         $entropy = 0;  

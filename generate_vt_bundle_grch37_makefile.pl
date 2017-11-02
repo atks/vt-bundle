@@ -129,7 +129,7 @@ my $dustBEDFile = "$outputDir/$destBEDFile";
 #sort and bgzip
 $tgt = "$logDir/$destBEDFile.OK";
 $dep = "$refFASTAFile";
-@cmd = ("$binDir/mdust/mdust $refFASTAFile -c | cut -f1,3,4 | bgzip -c > $outputDir/$destBEDFile");
+@cmd = ("$binDir/mdust/mdust $refFASTAFile -c | cut -f1,3,4 | perl -lane '{--$F[1]; print join("\t", @F);}' | bgzip -c > $outputDir/$destBEDFile");
 makeStep($tgt, $dep, @cmd);
 
 #index
@@ -313,7 +313,7 @@ $data = "NA12878.broad.kb";
 $destVCFFile = "$data.snps.indels.complex.genotypes.$ext";
 $destSitesVCFFile = "$data.snps.indels.complex.sites.$ext";
 
-#remove unecessary fields, normalize variants and removing duplicates
+#remove unnecessary fields, normalize variants and removing duplicates
 $tgt = "$logDir/$destVCFFile.OK";
 $dep = "$srcVCFFile";
 @cmd = ("zcat $srcVCFFile | $vt normalize - -r $refFASTAFile 2> $logDir/$data.normalize.log | $vt uniq - 2> $logDir/$data.uniq.log | $vt annotate_regions - -b $dustBEDFile -t DUST -d \"Low complexity sequence annotated by mdust\" -o $outputDir/$destVCFFile 2> $logDir/$data.annotate_regions.log");
