@@ -85,8 +85,8 @@ my $picard = "java -jar /net/fantasia/home/atks/programs/picard-tools-2.14.0/pic
 my $refFASTAFile = "/net/fantasia/home/atks/ref/genome/hs38DH.fa";
 
 #liftover from hg19
-my $hg19Tohg38ChainFile = "/net/fantasia/home/atks/ref/ucsc/hg19/hg19ToHg38.over.chain.gz";
-my $hs37Tohg38ChainFile = "/net/fantasia/home/atks/dev/vt/bundle/bin/chain/hs37ToHg38.over.chain.gz";
+my $hg19ToHg38ChainFile = "/net/fantasia/home/atks/ref/ucsc/hg19/hg19ToHg38.over.chain.gz";
+my $hs37ToHs38ChainFile = "/net/fantasia/home/atks/dev/vt/bundle/bin/chain/hs37ToHs38.over.chain.gz";
 
 my $indexExt = $ext eq "bcf" ? "csi" : "tbi";
 
@@ -144,9 +144,9 @@ $destBEDFile = "centromeres.bed.gz";
 #sort and bgzip
 $tgt = "$logDir/$destBEDFile.OK";
 $dep = "$srcUCSCSQLTableFile";
-@cmd = ("zcat $srcUCSCSQLTableFile | cut -f2-4 | " . 
-        " perl -lane '{if (!/_/) {print \"\$\$F[0]\\t\$\$F[1]\\t\$\$F[2]\\n\";}}' | " . 
-        " $bedtools sort -i - | " . 
+@cmd = ("zcat $srcUCSCSQLTableFile | cut -f2-4 | " .
+        " perl -lane '{if (!/_/) {print \"\$\$F[0]\\t\$\$F[1]\\t\$\$F[2]\\n\";}}' | " .
+        " $bedtools sort -i - | " .
         " sort -V | " .
         " bgzip -c > $outputDir/$destBEDFile");
 makeStep($tgt, $dep, @cmd);
@@ -185,9 +185,9 @@ $destBEDFile = "rmsk.bed.gz";
 #sort and bgzip
 $tgt = "$logDir/$destBEDFile.OK";
 $dep = "$srcUCSCSQLTableFile";
-@cmd = ("zcat $srcUCSCSQLTableFile | cut -f6-8 | " . 
-        " perl -lane '{if (!/_/) {print \"\$\$F[0]\\t\$\$F[1]\\t\$\$F[2]\\n\";}}' | " . 
-        " $bedtools sort -i - | " . 
+@cmd = ("zcat $srcUCSCSQLTableFile | cut -f6-8 | " .
+        " perl -lane '{if (!/_/) {print \"\$\$F[0]\\t\$\$F[1]\\t\$\$F[2]\\n\";}}' | " .
+        " $bedtools sort -i - | " .
         " sort -V | " .
         " bgzip -c > $outputDir/$destBEDFile");
 makeStep($tgt, $dep, @cmd);
@@ -256,15 +256,15 @@ makeStep($tgt, $dep, @cmd);
 $data = "trf.lobstr";
 
 #convert to vcf.gz as picard cannot read bcf files
-$tgt = "$grch38auxDir/$data.grch37.sites.vcf.gz.OK";
+$tgt = "$grch38logDir/$data.grch37.sites.vcf.gz.OK";
 $dep = "$grch37logDir/$data.sites.$ext.OK";
 @cmd = ("vt view -h $grch37outputDir/$data.sites.$ext -o $grch38auxDir/$data.grch37.sites.vcf.gz");
 makeStep($tgt, $dep, @cmd);
 
 #sort and bgzip
 $tgt = "$grch38auxDir/$data.sites.vcf.gz.OK";
-$dep = "$refFASTAFile $grch38auxDir/$data.grch37.sites.vcf.gz.OK";
-@cmd = ("$picard LiftoverVcf CHAIN=$hg19Tohg38ChainFile " .
+$dep = "$refFASTAFile $grch38logDir/$data.grch37.sites.vcf.gz.OK";
+@cmd = ("$picard LiftoverVcf CHAIN=$hs37ToHs38ChainFile " .
                            " R=$refFASTAFile " .
                            " I=$grch38auxDir/$data.grch37.sites.vcf.gz " .
                            " O=$grch38auxDir/$data.sites.vcf.gz " .
@@ -319,6 +319,37 @@ makeStep($tgt, $dep, @cmd);
 #############################
 #trf/VNTRseek reference panel
 #############################
+$data = "trf.vntrseek";
+
+#convert to vcf.gz as picard cannot read bcf files
+$tgt = "$grch38logDir/$data.grch37.sites.vcf.gz.OK";
+$dep = "$grch37logDir/$data.sites.$ext.OK";
+@cmd = ("vt view -h $grch37outputDir/$data.sites.$ext -o $grch38auxDir/$data.grch37.sites.vcf.gz");
+makeStep($tgt, $dep, @cmd);
+
+#sort and bgzip
+$tgt = "$grch38auxDir/$data.sites.vcf.gz.OK";
+$dep = "$refFASTAFile $grch38logDir/$data.grch37.sites.vcf.gz.OK";
+@cmd = ("$picard LiftoverVcf CHAIN=$hs37ToHs38ChainFile " .
+                           " R=$refFASTAFile " .
+                           " I=$grch38auxDir/$data.grch37.sites.vcf.gz " .
+                           " O=$grch38auxDir/$data.sites.vcf.gz " .
+                           " REJECT=$grch38auxDir/$data.rejected.sites.vcf.gz " .
+                           " 2> $grch38logDir/$data.liftover.log");
+makeStep($tgt, $dep, @cmd);
+
+#convert to ext
+$tgt = "$grch38logDir/$data.sites.$ext.OK";
+$dep = "$grch38auxDir/$data.sites.vcf.gz.OK";
+@cmd = ("$vt view $grch38auxDir/$data.sites.vcf.gz -o $grch38outputDir/$data.sites.$ext");
+makeStep($tgt, $dep, @cmd);
+
+#index sites file
+$tgt = "$grch38logDir/$data.sites.$ext.$indexExt.OK";
+$dep = "$grch38logDir/$data.sites.$ext.OK";
+@cmd = ("$vt index $grch38outputDir/$data.sites.$ext 2> $grch38logDir/$data.sites.$ext.index.log");
+makeStep($tgt, $dep, @cmd);
+
 #$refFile = "/net/fantasia/home/atks/programs/VNTRseek-1.08/resource/hg19/t26__.seq";
 #$data = "trf.vntrseek";
 #$destVCFFile = "$data.sites.$ext";
