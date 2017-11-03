@@ -97,6 +97,7 @@ my $destSitesVCFFile;
 my $rejectedVCFFile;
 my $rejectedSitesVCFFile;
 my $srcBEDFile;
+my $srcUCSCSQLTableFile;
 
 ###################
 #GENCODE Annotation
@@ -134,6 +135,28 @@ $dep = "$logDir/$destBEDFile.OK";
 @cmd = ("tabix -pbed $outputDir/$destBEDFile");
 makeStep($tgt, $dep, @cmd);
 
+###################
+#centromere regions
+###################
+$srcUCSCSQLTableFile = "/net/fantasia/home/atks/ref/ucsc/hg38/centromeres.txt.gz";
+$destBEDFile = "centromeres.bed.gz";
+
+#sort and bgzip
+$tgt = "$logDir/$destBEDFile.OK";
+$dep = "$srcUCSCSQLTableFile";
+@cmd = ("zcat $srcUCSCSQLTableFile | cut -f2-4 | " . 
+        " perl -lane '{if (!/_/) {print \"\$\$F[0]\\t\$\$F[1]\\t\$\$F[2]\\n\";}}' | " . 
+        " $bedtools sort -i - | " . 
+        " sort -V | " .
+        " bgzip -c > $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
+
+#index
+$tgt = "$logDir/$destBEDFile.tbi.OK";
+$dep = "$logDir/$destBEDFile.OK";
+@cmd = ("tabix -pbed $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
+
 ##############
 #mdust regions
 ##############
@@ -156,7 +179,7 @@ makeStep($tgt, $dep, @cmd);
 #####################
 #repeatmasker regions
 #####################
-my $srcUCSCSQLTableFile = "/net/fantasia/home/atks/ref/ucsc/hg38/rmsk.txt.gz";
+$srcUCSCSQLTableFile = "/net/fantasia/home/atks/ref/ucsc/hg38/rmsk.txt.gz";
 $destBEDFile = "rmsk.bed.gz";
 
 #sort and bgzip
