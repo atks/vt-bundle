@@ -80,6 +80,7 @@ mkpath($auxDir);
 my $vt = "/net/fantasia/home/atks/vt/vt";
 my $bedtools = "/net/fantasia/home/atks/programs/bedtools2/bin/bedtools";
 my $picard = "java -jar /net/fantasia/home/atks/programs/picard-tools-2.14.0/picard.jar";
+my $mdust = "$homeDir/programs/mdust/mdust";
 
 #reference sequence
 my $refFASTAFile = "/net/fantasia/home/atks/ref/genome/hs38DH.fa";

@@ -71,6 +71,7 @@ mkpath($logDir);
 #programs
 my $vt = "/net/fantasia/home/atks/vt/vt";
 my $bedtools = "/net/fantasia/home/atks/programs/bedtools2/bin/bedtools";
+my $mdust = "$homeDir/programs/mdust/mdust";
 
 #reference sequence
 my $refFASTAFile = "/net/fantasia/home/atks/ref/genome/hs37d5.fa";
@@ -129,7 +130,7 @@ my $dustBEDFile = "$outputDir/$destBEDFile";
 #sort and bgzip
 $tgt = "$logDir/$destBEDFile.OK";
 $dep = "$refFASTAFile";
-@cmd = ("$binDir/mdust/mdust $refFASTAFile -c | cut -f1,3,4 | perl -lane '{--\$\$F[1]; print join(\"\\t\", \@F);}' | bgzip -c > $outputDir/$destBEDFile");
+@cmd = ("$mdust $refFASTAFile -c | cut -f1,3,4 | perl -lane '{--\$\$F[1]; print join(\"\\t\", \@F);}' | bgzip -c > $outputDir/$destBEDFile");
 makeStep($tgt, $dep, @cmd);
 
 #index
