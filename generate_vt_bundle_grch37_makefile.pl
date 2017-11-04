@@ -129,7 +129,7 @@ my $dustBEDFile = "$outputDir/$destBEDFile";
 #sort and bgzip
 $tgt = "$logDir/$destBEDFile.OK";
 $dep = "$refFASTAFile";
-@cmd = ("$binDir/mdust/mdust $refFASTAFile -c | cut -f1,3,4 | perl -lane '{--$F[1]; print join("\t", @F);}' | bgzip -c > $outputDir/$destBEDFile");
+@cmd = ("$binDir/mdust/mdust $refFASTAFile -c | cut -f1,3,4 | perl -lane '{--\$\$F[1]; print join(\"\\t\", \@F);}' | bgzip -c > $outputDir/$destBEDFile");
 makeStep($tgt, $dep, @cmd);
 
 #index
