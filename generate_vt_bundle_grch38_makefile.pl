@@ -408,10 +408,24 @@ $dep = "$grch38AuxDir/$data.$type.vcf.gz.OK";
 @cmd = ("$vt view $grch38AuxDir/$data.$type.vcf.gz -o $grch38OutputDir/$data.$type.$ext");
 makeStep($tgt, $dep, @cmd);
 
-#index sites file
+#index file
 $tgt = "$grch38LogDir/$data.$type.$ext.$indexExt.OK";
 $dep = "$grch38LogDir/$data.$type.$ext.OK";
 @cmd = ("$vt index $grch38OutputDir/$data.$type.$ext 2> $grch38LogDir/$data.$type.$ext.index.log");
+makeStep($tgt, $dep, @cmd);
+
+$type = "snps.indels.complex";
+
+#extract sites
+$tgt = "$grch38LogDir/$data.$type.sites.$ext.OK";
+$dep = "$grch38LogDir/$data.$type.genotypes.$ext.OK";
+@cmd = ("$vt view $grch38OutputDir/$data.$type.genotypes.$ext -o $grch38OutputDir/$data.$type.sites.$ext");
+makeStep($tgt, $dep, @cmd);
+
+#index file
+$tgt = "$grch38LogDir/$data.$type.sites.$ext.$indexExt.OK";
+$dep = "$grch38LogDir/$data.$type.sites.$ext.OK";
+@cmd = ("$vt index $grch38OutputDir/$data.$type.sites.$ext 2> $grch38LogDir/$data.$type.sites.$ext.index.log");
 makeStep($tgt, $dep, @cmd);
 
 #$srcVCFFile = "/net/fantasia/home/atks/ref/gatk/2.8_b37/NA12878.knowledgebase.snapshot.20131119.b37.vcf.gz";
@@ -452,6 +466,20 @@ makeStep($tgt, $dep, @cmd);
 $tgt = "$grch38LogDir/$data.$type.$ext.$indexExt.OK";
 $dep = "$grch38LogDir/$data.$type.$ext.OK";
 @cmd = ("$vt index $grch38OutputDir/$data.$type.$ext 2> $grch38LogDir/$data.$type.$ext.index.log");
+makeStep($tgt, $dep, @cmd);
+
+type = "snps.indels.complex";
+
+#extract sites
+$tgt = "$grch38LogDir/$data.$type.sites.$ext.OK";
+$dep = "$grch38LogDir/$data.$type.genotypes.$ext.OK";
+@cmd = ("$vt view $grch38OutputDir/$data.$type.genotypes.$ext -o $grch38OutputDir/$data.$type.sites.$ext");
+makeStep($tgt, $dep, @cmd);
+
+#index file
+$tgt = "$grch38LogDir/$data.$type.sites.$ext.$indexExt.OK";
+$dep = "$grch38LogDir/$data.$type.sites.$ext.OK";
+@cmd = ("$vt index $grch38OutputDir/$data.$type.sites.$ext 2> $grch38LogDir/$data.$type.sites.$ext.index.log");
 makeStep($tgt, $dep, @cmd);
 
 #ConfidentRegions.bed.gz
@@ -496,6 +524,20 @@ $dep = "$grch38LogDir/$data.$type.$ext.OK";
 @cmd = ("$vt index $grch38OutputDir/$data.$type.$ext 2> $grch38LogDir/$data.$type.$ext.index.log");
 makeStep($tgt, $dep, @cmd);
 
+type = "snps.indels.complex";
+
+#extract sites
+$tgt = "$grch38LogDir/$data.$type.sites.$ext.OK";
+$dep = "$grch38LogDir/$data.$type.genotypes.$ext.OK";
+@cmd = ("$vt view $grch38OutputDir/$data.$type.genotypes.$ext -o $grch38OutputDir/$data.$type.sites.$ext");
+makeStep($tgt, $dep, @cmd);
+
+#index file
+$tgt = "$grch38LogDir/$data.$type.sites.$ext.$indexExt.OK";
+$dep = "$grch38LogDir/$data.$type.sites.$ext.OK";
+@cmd = ("$vt index $grch38OutputDir/$data.$type.sites.$ext 2> $grch38LogDir/$data.$type.sites.$ext.index.log");
+makeStep($tgt, $dep, @cmd);
+
 #$srcVCFFile = "/net/fantasia/home/atks/ref/platinum/v8/NA12878.vcf.gz";
 #
 #$data = "NA12878.illumina.platinum.v8";
@@ -535,6 +577,20 @@ makeStep($tgt, $dep, @cmd);
 $tgt = "$grch38LogDir/$data.$type.$ext.$indexExt.OK";
 $dep = "$grch38LogDir/$data.$type.$ext.OK";
 @cmd = ("$vt index $grch38OutputDir/$data.$type.$ext 2> $grch38LogDir/$data.$type.$ext.index.log");
+makeStep($tgt, $dep, @cmd);
+
+type = "snps.indels.complex";
+
+#extract sites
+$tgt = "$grch38LogDir/$data.$type.sites.$ext.OK";
+$dep = "$grch38LogDir/$data.$type.genotypes.$ext.OK";
+@cmd = ("$vt view $grch38OutputDir/$data.$type.genotypes.$ext -o $grch38OutputDir/$data.$type.sites.$ext");
+makeStep($tgt, $dep, @cmd);
+
+#index file
+$tgt = "$grch38LogDir/$data.$type.sites.$ext.$indexExt.OK";
+$dep = "$grch38LogDir/$data.$type.sites.$ext.OK";
+@cmd = ("$vt index $grch38OutputDir/$data.$type.sites.$ext 2> $grch38LogDir/$data.$type.sites.$ext.index.log");
 makeStep($tgt, $dep, @cmd);
 
 #$srcVCFFile = "/net/fantasia/home/atks/ref/giab/v2.19/NISTIntegratedCalls_14datasets_131103_allcall_UGHapMerge_HetHomVarPASS_VQSRv2.19_2mindatasets_5minYesNoRatio_all_nouncert_excludesimplerep_excludesegdups_excludedecoy_excludeRepSeqSTRs_noCNVs.vcf.gz";
@@ -615,6 +671,20 @@ makeStep($tgt, $dep, @cmd);
 $tgt = "$grch38LogDir/$data.$type.$ext.$indexExt.OK";
 $dep = "$grch38LogDir/$data.$type.$ext.OK";
 @cmd = ("$vt index $grch38OutputDir/$data.$type.$ext 2> $grch38LogDir/$data.$type.$ext.index.log");
+makeStep($tgt, $dep, @cmd);
+
+type = "indels";
+
+#extract sites
+$tgt = "$grch38LogDir/$data.$type.sites.$ext.OK";
+$dep = "$grch38LogDir/$data.$type.genotypes.$ext.OK";
+@cmd = ("$vt view $grch38OutputDir/$data.$type.genotypes.$ext -o $grch38OutputDir/$data.$type.sites.$ext");
+makeStep($tgt, $dep, @cmd);
+
+#index file
+$tgt = "$grch38LogDir/$data.$type.sites.$ext.$indexExt.OK";
+$dep = "$grch38LogDir/$data.$type.sites.$ext.OK";
+@cmd = ("$vt index $grch38OutputDir/$data.$type.sites.$ext 2> $grch38LogDir/$data.$type.sites.$ext.index.log");
 makeStep($tgt, $dep, @cmd);
 
 #$srcVCFFile = "/net/fantasia/home/atks/ref/mills/src/mills_indel_genotypes_hg19.vcf";
@@ -772,6 +842,20 @@ makeStep($tgt, $dep, @cmd);
 $tgt = "$grch38LogDir/$data.$type.$ext.$indexExt.OK";
 $dep = "$grch38LogDir/$data.$type.$ext.OK";
 @cmd = ("$vt index $grch38OutputDir/$data.$type.$ext 2> $grch38LogDir/$data.$type.$ext.index.log");
+makeStep($tgt, $dep, @cmd);
+
+type = "snps.indels.complex";
+
+#extract sites
+$tgt = "$grch38LogDir/$data.$type.sites.$ext.OK";
+$dep = "$grch38LogDir/$data.$type.genotypes.$ext.OK";
+@cmd = ("$vt view $grch38OutputDir/$data.$type.genotypes.$ext -o $grch38OutputDir/$data.$type.sites.$ext");
+makeStep($tgt, $dep, @cmd);
+
+#index file
+$tgt = "$grch38LogDir/$data.$type.sites.$ext.$indexExt.OK";
+$dep = "$grch38LogDir/$data.$type.sites.$ext.OK";
+@cmd = ("$vt index $grch38OutputDir/$data.$type.sites.$ext 2> $grch38LogDir/$data.$type.sites.$ext.index.log");
 makeStep($tgt, $dep, @cmd);
 
 #$srcVCFFile = "/net/fantasia/home/atks/ref/1000g/working/20120208_axiom_genotypes/src/ALL.wex.axiom.20120206.snps_and_indels.genotypes.vcf.gz";
