@@ -120,6 +120,23 @@ $dep = "$logDir/$destBEDFile.OK";
 @cmd = ("tabix -pbed $outputDir/$destBEDFile");
 makeStep($tgt, $dep, @cmd);
 
+########################
+#pseudoautosomal regions
+########################
+$destBEDFile = "pseudoautosomal.bed.gz";
+
+#sort and bgzip
+$tgt = "$logDir/$destBEDFile.OK";
+$dep = "";
+@cmd = ("$binDir/create_grch37_pseudoautosomal_regions_bed -o $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
+
+#index
+$tgt = "$logDir/$destBEDFile.tbi.OK";
+$dep = "$logDir/$destBEDFile.OK";
+@cmd = ("tabix -pbed $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
+
 ##############
 #mdust regions
 ##############
@@ -160,6 +177,18 @@ $tgt = "$logDir/$destBEDFile.tbi.OK";
 $dep = "$logDir/$destBEDFile.OK";
 @cmd = ("tabix -pbed $outputDir/$destBEDFile");
 makeStep($tgt, $dep, @cmd);
+
+############
+#trf regions
+############
+
+#before filtering
+
+####################
+#trf reference panel
+####################
+
+#before filtering
 
 ###################
 #trf/lobstr regions

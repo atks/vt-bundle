@@ -159,6 +159,23 @@ $dep = "$logDir/$destBEDFile.OK";
 @cmd = ("tabix -pbed $outputDir/$destBEDFile");
 makeStep($tgt, $dep, @cmd);
 
+########################
+#pseudoautosomal regions
+########################
+$destBEDFile = "pseudoautosomal.bed.gz";
+
+#sort and bgzip
+$tgt = "$logDir/$destBEDFile.OK";
+$dep = "";
+@cmd = ("$binDir/create_grch38_pseudoautosomal_regions_bed -o $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
+
+#index
+$tgt = "$logDir/$destBEDFile.tbi.OK";
+$dep = "$logDir/$destBEDFile.OK";
+@cmd = ("tabix -pbed $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
+
 ##############
 #mdust regions
 ##############
@@ -200,6 +217,59 @@ $dep = "$logDir/$destBEDFile.OK";
 @cmd = ("tabix -pbed $outputDir/$destBEDFile");
 makeStep($tgt, $dep, @cmd);
 
+#############
+##trf regions
+#############
+#$data = "trf";
+#$srcVCFFile = "$data.sites.$ext";
+#$destBEDFile = "$data.bed.gz";
+#
+##convert from VCF to bed
+#$tgt = "$grch38LogDir/$destBEDFile.OK";
+#$dep = "$grch38LogDir/$srcVCFFile.OK";
+#@cmd = ("$binDir/convert_vcf_2_bed $grch38OutputDir/$srcVCFFile -o $grch38OutputDir/$destBEDFile");
+#makeStep($tgt, $dep, @cmd);
+#
+##index
+#$tgt = "$grch38LogDir/$destBEDFile.tbi.OK";
+#$dep = "$grch38LogDir/$destBEDFile.OK";
+#@cmd = ("tabix -pbed $grch38OutputDir/$destBEDFile");
+#makeStep($tgt, $dep, @cmd);
+#
+#####################
+##trf reference panel
+#####################
+#$data = "trf";
+#
+##convert to vcf.gz as picard cannot read bcf files
+#$tgt = "$grch38LogDir/$data.grch37.sites.vcf.gz.OK";
+#$dep = "$grch37LogDir/$data.sites.$ext.OK";
+#@cmd = ("vt view -h $grch37OutputDir/$data.sites.$ext -o $grch38AuxDir/$data.grch37.sites.vcf.gz");
+#makeStep($tgt, $dep, @cmd);
+#
+##liftover
+#$tgt = "$grch38AuxDir/$data.sites.vcf.gz.OK";
+#$dep = "$refFASTAFile $grch38LogDir/$data.grch37.sites.vcf.gz.OK";
+#@cmd = ("$picard LiftoverVcf CHAIN=$hs37ToHs38ChainFile " .
+#                           " R=$refFASTAFile " .
+#                           " I=$grch38AuxDir/$data.grch37.sites.vcf.gz " .
+#                           " O=$grch38AuxDir/$data.sites.vcf.gz " .
+#                           " REJECT=$grch38AuxDir/$data.rejected.sites.vcf.gz " .
+#                           " 2> $grch38LogDir/$data.liftover.log");
+#makeStep($tgt, $dep, @cmd);
+#
+##convert to ext
+#$tgt = "$grch38LogDir/$data.sites.$ext.OK";
+#$dep = "$grch38AuxDir/$data.sites.vcf.gz.OK";
+#@cmd = ("$vt view $grch38AuxDir/$data.sites.vcf.gz -o $grch38OutputDir/$data.sites.$ext");
+#makeStep($tgt, $dep, @cmd);
+#
+##index sites file
+#$tgt = "$grch38LogDir/$data.sites.$ext.$indexExt.OK";
+#$dep = "$grch38LogDir/$data.sites.$ext.OK";
+#@cmd = ("$vt index $grch38OutputDir/$data.sites.$ext 2> $grch38LogDir/$data.sites.$ext.index.log");
+#makeStep($tgt, $dep, @cmd);
+
 ###################
 #trf/lobstr regions
 ###################
@@ -230,7 +300,7 @@ $dep = "$grch37LogDir/$data.sites.$ext.OK";
 @cmd = ("vt view -h $grch37OutputDir/$data.sites.$ext -o $grch38AuxDir/$data.grch37.sites.vcf.gz");
 makeStep($tgt, $dep, @cmd);
 
-#sort and bgzip
+#liftover
 $tgt = "$grch38AuxDir/$data.sites.vcf.gz.OK";
 $dep = "$refFASTAFile $grch38LogDir/$data.grch37.sites.vcf.gz.OK";
 @cmd = ("$picard LiftoverVcf CHAIN=$hs37ToHs38ChainFile " .
@@ -265,7 +335,7 @@ makeStep($tgt, $dep, @cmd);
 #@cmd = ("vt view -h $grch37OutputDir/$data.$type.$ext -o $grch38AuxDir/$data.grch37.$type.vcf.gz");
 #makeStep($tgt, $dep, @cmd);
 #
-##sort and bgzip
+##liftover
 #$tgt = "$grch38AuxDir/$data.$type.vcf.gz.OK";
 #$dep = "$refFASTAFile $grch38LogDir/$data.grch37.$type.vcf.gz.OK";
 #@cmd = ("$picard LiftoverVcf CHAIN=$hs37ToHs38ChainFile " .
@@ -303,7 +373,7 @@ $dep = "$grch37LogDir/$data.sites.$ext.OK";
 @cmd = ("vt view -h $grch37OutputDir/$data.sites.$ext -o $grch38AuxDir/$data.grch37.sites.vcf.gz");
 makeStep($tgt, $dep, @cmd);
 
-#sort and bgzip
+#liftover
 $tgt = "$grch38AuxDir/$data.sites.vcf.gz.OK";
 $dep = "$refFASTAFile $grch38LogDir/$data.grch37.sites.vcf.gz.OK";
 @cmd = ("$picard LiftoverVcf CHAIN=$hs37ToHs38ChainFile " .
@@ -357,7 +427,7 @@ $dep = "$grch37LogDir/$data.$type.$ext.OK";
 @cmd = ("vt view -h $grch37OutputDir/$data.$type.$ext -o $grch38AuxDir/$data.grch37.$type.vcf.gz");
 makeStep($tgt, $dep, @cmd);
 
-#sort and bgzip
+#liftover
 $tgt = "$grch38AuxDir/$data.$type.vcf.gz.OK";
 $dep = "$refFASTAFile $grch38LogDir/$data.grch37.$type.vcf.gz.OK";
 @cmd = ("$picard LiftoverVcf CHAIN=$hs37ToHs38ChainFile " .
@@ -392,7 +462,7 @@ $dep = "$grch37LogDir/$data.$type.$ext.OK";
 @cmd = ("vt view -h $grch37OutputDir/$data.$type.$ext -o $grch38AuxDir/$data.grch37.$type.vcf.gz");
 makeStep($tgt, $dep, @cmd);
 
-#sort and bgzip
+#liftover
 $tgt = "$grch38AuxDir/$data.$type.vcf.gz.OK";
 $dep = "$refFASTAFile $grch38LogDir/$data.grch37.$type.vcf.gz.OK";
 @cmd = ("$picard LiftoverVcf CHAIN=$hs37ToHs38ChainFile " .
@@ -446,7 +516,7 @@ $dep = "$grch37LogDir/$data.$type.$ext.OK";
 @cmd = ("vt view -h $grch37OutputDir/$data.$type.$ext -o $grch38AuxDir/$data.grch37.$type.vcf.gz");
 makeStep($tgt, $dep, @cmd);
 
-#sort and bgzip
+#liftover
 $tgt = "$grch38AuxDir/$data.$type.vcf.gz.OK";
 $dep = "$refFASTAFile $grch38LogDir/$data.grch37.$type.vcf.gz.OK";
 @cmd = ("$picard LiftoverVcf CHAIN=$hs37ToHs38ChainFile " .
@@ -469,7 +539,7 @@ $dep = "$grch38LogDir/$data.$type.$ext.OK";
 @cmd = ("$vt index $grch38OutputDir/$data.$type.$ext 2> $grch38LogDir/$data.$type.$ext.index.log");
 makeStep($tgt, $dep, @cmd);
 
-type = "snps.indels.complex";
+$type = "snps.indels.complex";
 
 #extract sites
 $tgt = "$grch38LogDir/$data.$type.sites.$ext.OK";
@@ -502,7 +572,7 @@ $dep = "$grch37LogDir/$data.$type.$ext.OK";
 @cmd = ("vt view -h $grch37OutputDir/$data.$type.$ext -o $grch38AuxDir/$data.grch37.$type.vcf.gz");
 makeStep($tgt, $dep, @cmd);
 
-#sort and bgzip
+#liftover
 $tgt = "$grch38AuxDir/$data.$type.vcf.gz.OK";
 $dep = "$refFASTAFile $grch38LogDir/$data.grch37.$type.vcf.gz.OK";
 @cmd = ("$picard LiftoverVcf CHAIN=$hs37ToHs38ChainFile " .
@@ -525,7 +595,7 @@ $dep = "$grch38LogDir/$data.$type.$ext.OK";
 @cmd = ("$vt index $grch38OutputDir/$data.$type.$ext 2> $grch38LogDir/$data.$type.$ext.index.log");
 makeStep($tgt, $dep, @cmd);
 
-type = "snps.indels.complex";
+$type = "snps.indels.complex";
 
 #extract sites
 $tgt = "$grch38LogDir/$data.$type.sites.$ext.OK";
@@ -557,7 +627,7 @@ $dep = "$grch37LogDir/$data.$type.$ext.OK";
 @cmd = ("vt view -h $grch37OutputDir/$data.$type.$ext -o $grch38AuxDir/$data.grch37.$type.vcf.gz");
 makeStep($tgt, $dep, @cmd);
 
-#sort and bgzip
+#liftover
 $tgt = "$grch38AuxDir/$data.$type.vcf.gz.OK";
 $dep = "$refFASTAFile $grch38LogDir/$data.grch37.$type.vcf.gz.OK";
 @cmd = ("$picard LiftoverVcf CHAIN=$hs37ToHs38ChainFile " .
@@ -580,7 +650,7 @@ $dep = "$grch38LogDir/$data.$type.$ext.OK";
 @cmd = ("$vt index $grch38OutputDir/$data.$type.$ext 2> $grch38LogDir/$data.$type.$ext.index.log");
 makeStep($tgt, $dep, @cmd);
 
-type = "snps.indels.complex";
+$type = "snps.indels.complex";
 
 #extract sites
 $tgt = "$grch38LogDir/$data.$type.sites.$ext.OK";
@@ -612,7 +682,7 @@ $dep = "$grch37LogDir/$data.$type.$ext.OK";
 @cmd = ("vt view -h $grch37OutputDir/$data.$type.$ext -o $grch38AuxDir/$data.grch37.$type.vcf.gz");
 makeStep($tgt, $dep, @cmd);
 
-#sort and bgzip
+#liftover
 $tgt = "$grch38AuxDir/$data.$type.vcf.gz.OK";
 $dep = "$refFASTAFile $grch38LogDir/$data.grch37.$type.vcf.gz.OK";
 @cmd = ("$picard LiftoverVcf CHAIN=$hs37ToHs38ChainFile " .
@@ -651,7 +721,7 @@ $dep = "$grch37LogDir/$data.$type.$ext.OK";
 @cmd = ("vt view -h $grch37OutputDir/$data.$type.$ext -o $grch38AuxDir/$data.grch37.$type.vcf.gz");
 makeStep($tgt, $dep, @cmd);
 
-#sort and bgzip
+#liftover
 $tgt = "$grch38AuxDir/$data.$type.vcf.gz.OK";
 $dep = "$refFASTAFile $grch38LogDir/$data.grch37.$type.vcf.gz.OK";
 @cmd = ("$picard LiftoverVcf CHAIN=$hs37ToHs38ChainFile " .
@@ -674,7 +744,7 @@ $dep = "$grch38LogDir/$data.$type.$ext.OK";
 @cmd = ("$vt index $grch38OutputDir/$data.$type.$ext 2> $grch38LogDir/$data.$type.$ext.index.log");
 makeStep($tgt, $dep, @cmd);
 
-type = "indels";
+$type = "indels";
 
 #extract sites
 $tgt = "$grch38LogDir/$data.$type.sites.$ext.OK";
@@ -705,7 +775,7 @@ $dep = "$grch37LogDir/$data.$type.$ext.OK";
 @cmd = ("vt view -h $grch37OutputDir/$data.$type.$ext -o $grch38AuxDir/$data.grch37.$type.vcf.gz");
 makeStep($tgt, $dep, @cmd);
 
-#sort and bgzip
+#liftover
 $tgt = "$grch38AuxDir/$data.$type.vcf.gz.OK";
 $dep = "$refFASTAFile $grch38LogDir/$data.grch37.$type.vcf.gz.OK";
 @cmd = ("$picard LiftoverVcf CHAIN=$hs37ToHs38ChainFile " .
@@ -736,15 +806,15 @@ makeStep($tgt, $dep, @cmd);
 #1000 Genomes v5
 ################
 $data = "1000G.v5";
-$type = "snps.indels.complex.svs.sites";
+$type = "snps.indels.complex.sites";
 
 #convert to vcf.gz as picard cannot read bcf files even if piped via STDIN
 $tgt = "$grch38LogDir/$data.grch37.$type.vcf.gz.OK";
-$dep = "$grch37LogDir/$data.$type.$ext.OK";
-@cmd = ("vt view -h $grch37OutputDir/$data.$type.$ext -o $grch38AuxDir/$data.grch37.$type.vcf.gz");
+$dep = "$grch37LogDir/$data.snps.indels.complex.svs.sites.$ext.OK";
+@cmd = ("vt view -h $grch37OutputDir/$data.snps.indels.complex.svs.sites.$ext -o $grch38AuxDir/$data.grch37.$type.vcf.gz -f \"VTYPE!=SV\"");
 makeStep($tgt, $dep, @cmd);
 
-#sort and bgzip
+#lift over
 $tgt = "$grch38AuxDir/$data.$type.vcf.gz.OK";
 $dep = "$refFASTAFile $grch38LogDir/$data.grch37.$type.vcf.gz.OK";
 @cmd = ("$picard LiftoverVcf CHAIN=$hs37ToHs38ChainFile " .
@@ -783,7 +853,7 @@ $dep = "$grch37LogDir/$data.$type.$ext.OK";
 @cmd = ("vt view -h $grch37OutputDir/$data.$type.$ext -o $grch38AuxDir/$data.grch37.$type.vcf.gz");
 makeStep($tgt, $dep, @cmd);
 
-#sort and bgzip
+#lift over
 $tgt = "$grch38AuxDir/$data.$type.vcf.gz.OK";
 $dep = "$refFASTAFile $grch38LogDir/$data.grch37.$type.vcf.gz.OK";
 @cmd = ("$picard LiftoverVcf CHAIN=$hs37ToHs38ChainFile " .
@@ -822,7 +892,7 @@ $dep = "$grch37LogDir/$data.$type.$ext.OK";
 @cmd = ("vt view -h $grch37OutputDir/$data.$type.$ext -o $grch38AuxDir/$data.grch37.$type.vcf.gz");
 makeStep($tgt, $dep, @cmd);
 
-#sort and bgzip
+#liftover
 $tgt = "$grch38AuxDir/$data.$type.vcf.gz.OK";
 $dep = "$refFASTAFile $grch38LogDir/$data.grch37.$type.vcf.gz.OK";
 @cmd = ("$picard LiftoverVcf CHAIN=$hs37ToHs38ChainFile " .
@@ -845,7 +915,7 @@ $dep = "$grch38LogDir/$data.$type.$ext.OK";
 @cmd = ("$vt index $grch38OutputDir/$data.$type.$ext 2> $grch38LogDir/$data.$type.$ext.index.log");
 makeStep($tgt, $dep, @cmd);
 
-type = "snps.indels.complex";
+$type = "snps.indels.complex";
 
 #extract sites
 $tgt = "$grch38LogDir/$data.$type.sites.$ext.OK";
@@ -867,37 +937,37 @@ makeStep($tgt, $dep, @cmd);
 ###################
 #CODIS STR data set
 ###################
-$data = "codis";
-$type = "strs.sites";
-
-#convert to vcf.gz as picard cannot read bcf files even if piped via STDIN
-$tgt = "$grch38LogDir/$data.grch37.$type.vcf.gz.OK";
-$dep = "$grch37LogDir/$data.$type.$ext.OK";
-@cmd = ("vt view -h $grch37OutputDir/$data.$type.$ext -o $grch38AuxDir/$data.grch37.$type.vcf.gz");
-makeStep($tgt, $dep, @cmd);
-
-#sort and bgzip
-$tgt = "$grch38AuxDir/$data.$type.vcf.gz.OK";
-$dep = "$refFASTAFile $grch38LogDir/$data.grch37.$type.vcf.gz.OK";
-@cmd = ("$picard LiftoverVcf CHAIN=$hs37ToHs38ChainFile " .
-                           " R=$refFASTAFile " .
-                           " I=$grch38AuxDir/$data.grch37.$type.vcf.gz " .
-                           " O=$grch38AuxDir/$data.$type.vcf.gz " .
-                           " REJECT=$grch38AuxDir/$data.rejected.$type.vcf.gz " .
-                           " 2> $grch38LogDir/$data.$type.liftover.log");
-makeStep($tgt, $dep, @cmd);
-
-#convert to ext
-$tgt = "$grch38LogDir/$data.$type.$ext.OK";
-$dep = "$grch38AuxDir/$data.$type.vcf.gz.OK";
-@cmd = ("$vt view $grch38AuxDir/$data.$type.vcf.gz -o $grch38OutputDir/$data.$type.$ext");
-makeStep($tgt, $dep, @cmd);
-
-#index sites file
-$tgt = "$grch38LogDir/$data.$type.$ext.$indexExt.OK";
-$dep = "$grch38LogDir/$data.$type.$ext.OK";
-@cmd = ("$vt index $grch38OutputDir/$data.$type.$ext 2> $grch38LogDir/$data.$type.$ext.index.log");
-makeStep($tgt, $dep, @cmd);
+#$data = "codis";
+#$type = "strs.sites";
+#
+##convert to vcf.gz as picard cannot read bcf files even if piped via STDIN
+#$tgt = "$grch38LogDir/$data.grch37.$type.vcf.gz.OK";
+#$dep = "$grch37LogDir/$data.$type.$ext.OK";
+#@cmd = ("vt view -h $grch37OutputDir/$data.$type.$ext -o $grch38AuxDir/$data.grch37.$type.vcf.gz");
+#makeStep($tgt, $dep, @cmd);
+#
+##liftover
+#$tgt = "$grch38AuxDir/$data.$type.vcf.gz.OK";
+#$dep = "$refFASTAFile $grch38LogDir/$data.grch37.$type.vcf.gz.OK";
+#@cmd = ("$picard LiftoverVcf CHAIN=$hs37ToHs38ChainFile " .
+#                           " R=$refFASTAFile " .
+#                           " I=$grch38AuxDir/$data.grch37.$type.vcf.gz " .
+#                           " O=$grch38AuxDir/$data.$type.vcf.gz " .
+#                           " REJECT=$grch38AuxDir/$data.rejected.$type.vcf.gz " .
+#                           " 2> $grch38LogDir/$data.$type.liftover.log");
+#makeStep($tgt, $dep, @cmd);
+#
+##convert to ext
+#$tgt = "$grch38LogDir/$data.$type.$ext.OK";
+#$dep = "$grch38AuxDir/$data.$type.vcf.gz.OK";
+#@cmd = ("$vt view $grch38AuxDir/$data.$type.vcf.gz -o $grch38OutputDir/$data.$type.$ext");
+#makeStep($tgt, $dep, @cmd);
+#
+##index sites file
+#$tgt = "$grch38LogDir/$data.$type.$ext.$indexExt.OK";
+#$dep = "$grch38LogDir/$data.$type.$ext.OK";
+#@cmd = ("$vt index $grch38OutputDir/$data.$type.$ext 2> $grch38LogDir/$data.$type.$ext.index.log");
+#makeStep($tgt, $dep, @cmd);
 
 #$srcVCFFile = "/net/fantasia/home/atks/ref/codis/codis.sites.vcf";
 #$data = "codis";

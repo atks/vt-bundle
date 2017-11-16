@@ -1,0 +1,73 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+use POSIX qw(ceil floor);
+use File::Basename;
+use File::Path;
+use Getopt::Long;
+use Pod::Usage;
+
+=head1 NAME
+
+convert_vcf_2_bed
+
+=head1 SYNOPSIS
+
+create_grch37_pseudoautosomal_region_bed [options] <filename>
+
+    -v  verbose
+    -d  debug
+    -o  output contig directory.
+
+    usage: convert_vcf_2_bed input.vcf
+
+    Creates a BED file containing the pseudoautosomal regions for GRCh38.
+
+=head1 DESCRIPTION
+
+=cut
+
+#option variables
+my $help;
+my $outputBEDFile;
+
+#initialize options
+Getopt::Long::Configure ('bundling');
+
+if(!GetOptions ('h'=>\$help,
+                'o:s'=>\$outputBEDFile)
+    || scalar(@ARGV)!=0)
+{
+    if ($help)
+    {
+        pod2usage(-verbose => 2);
+    }
+    else
+    {
+        pod2usage(1);
+    }
+}
+
+if ($outputBEDFile =~ /bed.gz$/)
+{
+    open(OUT, "| bgzip -c > $outputBEDFile");
+}
+else
+{
+    open(OUT, ">$outputBEDFile");
+}
+
+#GRCh38 pseudoautosomal regions
+#PAR1	X	10,001	    2,781,479	Xp22
+#       Y	10,001  	2,781,479	Yp11
+#PAR2	X	155,701,383	156,030,895	Xq28
+#       Y	56,887,903	57,217,415	Yq12
+
+#note that positions are 0 based exclusive
+print OUT "X\t10000\t2781479\n";
+print OUT "X\t155701382\t156030895\n";
+print OUT "Y\t10000\t2781479\n";
+print OUT "Y\t56887902\t57217415\n";
+
+close(OUT);
