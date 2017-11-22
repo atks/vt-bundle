@@ -10,7 +10,7 @@ use Pod::Usage;
 
 =head1 NAME
 
-convert_vcf_2_bed
+create_grch37_pseudoautosomal_region_bed
 
 =head1 SYNOPSIS
 

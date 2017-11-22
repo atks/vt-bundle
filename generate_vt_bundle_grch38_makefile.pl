@@ -176,6 +176,23 @@ $dep = "$logDir/$destBEDFile.OK";
 @cmd = ("tabix -pbed $outputDir/$destBEDFile");
 makeStep($tgt, $dep, @cmd);
 
+###########################
+#nonpseudoautosomal regions
+###########################
+$destBEDFile = "nonpseudoautosomal.bed.gz";
+
+#sort and bgzip
+$tgt = "$logDir/$destBEDFile.OK";
+$dep = "";
+@cmd = ("$binDir/create_grch38_nonpseudoautosomal_regions_bed -o $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
+
+#index
+$tgt = "$logDir/$destBEDFile.tbi.OK";
+$dep = "$logDir/$destBEDFile.OK";
+@cmd = ("tabix -pbed $outputDir/$destBEDFile");
+makeStep($tgt, $dep, @cmd);
+
 ##############
 #mdust regions
 ##############
